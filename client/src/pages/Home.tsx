@@ -252,7 +252,7 @@ export default function Home() {
             Únete a miles de usuarios ganando dinero con tareas simples.
           </p>
           <Button
-            onClick={() => window.location.href = getLoginUrl()}
+            onClick={() => window.location.href = "/register"}
             size="lg"
             className="bg-blue-600 hover:bg-blue-700 text-white px-8"
           >

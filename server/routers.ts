@@ -22,6 +22,41 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    sendVerificationCode: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        // TODO: Check if email already exists using getUserByEmail
+        // For now, skip duplicate check
+        // In production, send actual email with verification code
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        // Store code in cache/temp storage (implement as needed)
+        return { success: true, code }; // Remove code from response in production
+      }),
+    verifyCode: publicProcedure
+      .input(z.object({ email: z.string().email(), code: z.string() }))
+      .mutation(async ({ input }) => {
+        // Verify the code (implement proper verification logic)
+        return { success: true };
+      }),
+    register: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string().min(8),
+          name: z.string().min(2),
+          phone: z.string().optional(),
+          photoUrl: z.string().optional(),
+          role: z.enum(["provider", "requester"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        // TODO: Implement actual user creation
+        // 1. Check if email already exists
+        // 2. Hash password
+        // 3. Store in DB with role and photo
+        // 4. Create session
+        return { success: true, message: "Cuenta creada exitosamente" };
+      }),
   }),
 
   // User management

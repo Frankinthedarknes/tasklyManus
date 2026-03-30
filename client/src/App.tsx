@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import { Register } from "./pages/Register";
 import FeedTinderFinal from "./pages/FeedTinderFinal";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
@@ -38,6 +39,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/register"} component={Register} />
       <Route path={"/app/feed"}>
         {() => <ProtectedRoute component={FeedTinderFinal} />}
       </Route>
