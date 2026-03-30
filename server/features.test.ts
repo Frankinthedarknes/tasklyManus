@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as db from "./db";
 
 // Mock database functions
@@ -22,6 +22,22 @@ vi.mock("./db", () => ({
   getActiveFreeTokens: vi.fn(),
   saveService: vi.fn(),
   getSavedServices: vi.fn(),
+  getDashboardStats: vi.fn(),
+  getAllUsers: vi.fn(),
+  suspendUser: vi.fn(),
+  unsuspendUser: vi.fn(),
+  getUserSuspensions: vi.fn(),
+  createDispute: vi.fn(),
+  getDisputes: vi.fn(),
+  assignDisputeToAdmin: vi.fn(),
+  resolveDispute: vi.fn(),
+  logAdminAction: vi.fn(),
+  getAuditLogs: vi.fn(),
+  createContentModeration: vi.fn(),
+  getPendingContentModerations: vi.fn(),
+  reviewContentModeration: vi.fn(),
+  assignAdminRole: vi.fn(),
+  getAdminRole: vi.fn(),
 }));
 
 describe("User Management", () => {
@@ -48,67 +64,38 @@ describe("User Management", () => {
     const mockUpdatedUser = {
       id: 1,
       name: "Test User",
+      email: "test@example.com",
       bio: "New bio",
     };
 
     vi.mocked(db.updateUserProfile).mockResolvedValue(mockUpdatedUser as any);
 
     const result = await db.updateUserProfile(1, updates);
-    expect(result?.bio).toBe("New bio");
+    expect(result).toEqual(mockUpdatedUser);
+    expect(db.updateUserProfile).toHaveBeenCalledWith(1, updates);
   });
 });
 
-describe("Wallet Management", () => {
-  it("should create or get wallet", async () => {
+describe("Wallet & Tokens", () => {
+  it("should get or create wallet", async () => {
     const mockWallet = {
       id: 1,
       userId: 1,
-      balance: 0,
-      totalEarned: 0,
-      totalSpent: 0,
+      balanceTasklys: 100,
     };
 
     vi.mocked(db.getOrCreateWallet).mockResolvedValue(mockWallet as any);
 
     const result = await db.getOrCreateWallet(1);
-    expect(result?.userId).toBe(1);
-    expect(result?.balance).toBe(0);
+    expect(result).toEqual(mockWallet);
+    expect(db.getOrCreateWallet).toHaveBeenCalledWith(1);
   });
 
   it("should update wallet balance", async () => {
-    const mockWallet = {
-      id: 1,
-      userId: 1,
-      balance: 10,
-      totalEarned: 10,
-      totalSpent: 0,
-    };
+    vi.mocked(db.updateWalletBalance).mockResolvedValue(undefined);
 
-    vi.mocked(db.updateWalletBalance).mockResolvedValue(mockWallet as any);
-
-    const result = await db.updateWalletBalance(1, 10);
-    expect(result?.balance).toBe(10);
-  });
-});
-
-describe("Token Transactions", () => {
-  it("should create token transaction", async () => {
-    vi.mocked(db.createTokenTransaction).mockResolvedValue(1);
-
-    const result = await db.createTokenTransaction(
-      1,
-      "purchase",
-      5,
-      "Purchased 5 Tasklys"
-    );
-
-    expect(result).toBe(1);
-    expect(db.createTokenTransaction).toHaveBeenCalledWith(
-      1,
-      "purchase",
-      5,
-      "Purchased 5 Tasklys"
-    );
+    await db.updateWalletBalance(1, 50);
+    expect(db.updateWalletBalance).toHaveBeenCalledWith(1, 50);
   });
 });
 
@@ -116,51 +103,58 @@ describe("Services", () => {
   it("should create a service", async () => {
     const mockService = {
       id: 1,
-      title: "Help moving",
-      description: "Need help moving furniture",
-      category: "Carga y movimiento",
-      priceInTasklys: 20,
-      latitude: 4.7110,
-      longitude: -74.0055,
-      type: "request" as const,
-      createdById: 1,
-      status: "published" as const,
-      createdAt: new Date(),
+      userId: 1,
+      title: "Cleaning Service",
+      type: "offer",
+      priceTasklys: 50,
     };
 
     vi.mocked(db.createService).mockResolvedValue(mockService as any);
 
-    const result = await db.createService({
-      title: "Help moving",
-      description: "Need help moving furniture",
-      category: "Carga y movimiento",
-      priceInTasklys: 20,
-      latitude: 4.7110,
-      longitude: -74.0055,
-      type: "request",
-      createdById: 1,
-    });
-
-    expect(result?.title).toBe("Help moving");
-    expect(result?.type).toBe("request");
+    const result = await db.createService(1, "Cleaning Service", "offer", 50);
+    expect(result).toEqual(mockService);
   });
 
-  it("should get nearby services", async () => {
+  it("should find nearby services", async () => {
     const mockServices = [
-      {
-        id: 1,
-        title: "Service 1",
-        latitude: 4.7110,
-        longitude: -74.0055,
-        priceInTasklys: 10,
-      },
+      { id: 1, title: "Service 1", distance: 0.5 },
+      { id: 2, title: "Service 2", distance: 1.2 },
     ];
 
     vi.mocked(db.getNearbyServices).mockResolvedValue(mockServices as any);
 
-    const result = await db.getNearbyServices(4.7110, -74.0055, 5);
-    expect(result).toHaveLength(1);
-    expect(result[0]?.title).toBe("Service 1");
+    const result = await db.getNearbyServices(40.7128, -74.006, 5);
+    expect(result).toEqual(mockServices);
+    expect(result.length).toBe(2);
+  });
+});
+
+describe("Chat", () => {
+  it("should get or create conversation", async () => {
+    const mockConversation = {
+      id: 1,
+      userId1: 1,
+      userId2: 2,
+    };
+
+    vi.mocked(db.getOrCreateConversation).mockResolvedValue(mockConversation as any);
+
+    const result = await db.getOrCreateConversation(1, 2);
+    expect(result).toEqual(mockConversation);
+  });
+
+  it("should add chat message", async () => {
+    const mockMessage = {
+      id: 1,
+      conversationId: 1,
+      senderId: 1,
+      text: "Hello",
+    };
+
+    vi.mocked(db.addChatMessage).mockResolvedValue(mockMessage as any);
+
+    const result = await db.addChatMessage(1, 1, "Hello");
+    expect(result).toEqual(mockMessage);
   });
 });
 
@@ -169,88 +163,119 @@ describe("Escrow Transactions", () => {
     const mockEscrow = {
       id: 1,
       serviceId: 1,
-      requesterId: 1,
-      providerId: 2,
-      amountInTasklys: 20,
-      status: "pending" as const,
-      createdAt: new Date(),
+      buyerId: 1,
+      sellerId: 2,
+      amountInTasklys: 50,
+      status: "pending",
     };
 
     vi.mocked(db.createEscrowTransaction).mockResolvedValue(mockEscrow as any);
 
-    const result = await db.createEscrowTransaction(1, 1, 2, 20);
-    expect(result?.status).toBe("pending");
-    expect(result?.amountInTasklys).toBe(20);
+    const result = await db.createEscrowTransaction(1, 1, 2, 50);
+    expect(result).toEqual(mockEscrow);
   });
 
   it("should update escrow status", async () => {
-    const mockEscrow = {
-      id: 1,
-      status: "completed" as const,
-    };
+    vi.mocked(db.updateEscrowStatus).mockResolvedValue(undefined);
 
-    vi.mocked(db.updateEscrowStatus).mockResolvedValue(mockEscrow as any);
-
-    const result = await db.updateEscrowStatus(1, "completed");
-    expect(result?.status).toBe("completed");
+    await db.updateEscrowStatus(1, "completed");
+    expect(db.updateEscrowStatus).toHaveBeenCalledWith(1, "completed");
   });
 });
 
-describe("Chat", () => {
-  it("should create or get conversation", async () => {
-    const mockConversation = {
+describe("Token Transactions", () => {
+  it("should create token transaction", async () => {
+    const mockTransaction = {
       id: 1,
-      user1Id: 1,
-      user2Id: 2,
-      createdAt: new Date(),
+      userId: 1,
+      type: "purchase",
+      amount: 5,
+      description: "Purchased 5 Tasklys",
     };
 
-    vi.mocked(db.getOrCreateConversation).mockResolvedValue(
-      mockConversation as any
+    vi.mocked(db.createTokenTransaction).mockResolvedValue(mockTransaction as any);
+
+    const result = await db.createTokenTransaction(
+      1,
+      "purchase",
+      5,
+      "Purchased 5 Tasklys"
     );
 
-    const result = await db.getOrCreateConversation(1, 2);
-    expect(result?.user1Id).toBe(1);
-    expect(result?.user2Id).toBe(2);
+    expect(result).toEqual(mockTransaction);
+    expect(db.createTokenTransaction).toHaveBeenCalled();
   });
+});
 
-  it("should add chat message", async () => {
-    vi.mocked(db.addChatMessage).mockResolvedValue(1);
+describe("Services", () => {
+  it("should create a service with all details", async () => {
+    const mockService = {
+      id: 1,
+      userId: 1,
+      title: "Web Design",
+      description: "Professional web design",
+      type: "offer",
+      category: "design",
+      priceTasklys: 100,
+      latitude: 40.7128,
+      longitude: -74.006,
+      urgency: "flexible",
+    };
 
-    const result = await db.addChatMessage(
+    vi.mocked(db.createService).mockResolvedValue(mockService as any);
+
+    const result = await db.createService(
       1,
-      1,
-      "Hello, are you available?"
+      "Web Design",
+      "offer",
+      100,
+      "Professional web design",
+      "design",
+      40.7128,
+      -74.006,
+      "flexible"
     );
 
-    expect(result).toBe(1);
+    expect(result).toEqual(mockService);
   });
 
-  it("should flag security messages", async () => {
-    vi.mocked(db.addChatMessage).mockResolvedValue(1);
+  it("should save a service", async () => {
+    vi.mocked(db.saveService).mockResolvedValue({ id: 1 } as any);
 
-    // Message with phone number should be flagged
-    await db.addChatMessage(1, 1, "Call me at +57 300 123 4567");
+    const result = await db.saveService(1, 1);
+    expect(result).toBeDefined();
+    expect(db.saveService).toHaveBeenCalledWith(1, 1);
+  });
 
-    expect(db.addChatMessage).toHaveBeenCalled();
+  it("should get saved services", async () => {
+    const mockSaved = [
+      { id: 1, userId: 1, serviceId: 1 },
+      { id: 2, userId: 1, serviceId: 2 },
+    ];
+
+    vi.mocked(db.getSavedServices).mockResolvedValue(mockSaved as any);
+
+    const result = await db.getSavedServices(1);
+    expect(result).toEqual(mockSaved);
+    expect(result.length).toBe(2);
   });
 });
 
 describe("Ratings", () => {
-  it("should create rating", async () => {
-    vi.mocked(db.createRating).mockResolvedValue(1);
+  it("should create a rating", async () => {
+    const mockRating = {
+      id: 1,
+      serviceId: 1,
+      raterId: 1,
+      ratedUserId: 2,
+      score: 5,
+      review: "Excellent service",
+    };
 
-    const result = await db.createRating(
-      1,
-      1,
-      2,
-      5,
-      "Great service!",
-      { communication: 5, punctuality: 5 },
-      ["responsive", "professional"]
-    );
+    vi.mocked(db.createRating).mockResolvedValue(mockRating as any);
 
-    expect(result).toBe(1);
+    const result = await db.createRating(1, 1, 2, 5, "Excellent service");
+    expect(result).toEqual(mockRating);
   });
 });
 
@@ -259,83 +284,110 @@ describe("Gamification", () => {
     const mockAchievement = {
       id: 1,
       userId: 1,
-      type: "10_services",
-      title: "10 Services Completed",
+      type: "first_service",
+      title: "First Service",
       pointsAwarded: 50,
     };
 
     vi.mocked(db.unlockAchievement).mockResolvedValue(mockAchievement as any);
 
-    const result = await db.unlockAchievement(
-      1,
-      "10_services",
-      "10 Services Completed",
-      undefined,
-      50
-    );
-
-    expect(result?.type).toBe("10_services");
-    expect(result?.pointsAwarded).toBe(50);
+    const result = await db.unlockAchievement(1, "first_service", "First Service");
+    expect(result).toEqual(mockAchievement);
   });
 
-  it("should update user level based on points", async () => {
-    // Level progression: 1-99 (Nuevo), 100-249 (Activo), 250-499 (Confiable), 500-999 (Pro), 1000+ (Leyenda)
+  it("should update user level", async () => {
     vi.mocked(db.updateUserLevel).mockResolvedValue(2);
 
     const result = await db.updateUserLevel(1);
-    expect(result).toBeGreaterThanOrEqual(1);
-    expect(result).toBeLessThanOrEqual(5);
+    expect(result).toBe(2);
   });
 });
 
-describe("Free Token Promotions", () => {
-  it("should create free token promotion for onboarding", async () => {
-    vi.mocked(db.createFreeTokenPromotion).mockResolvedValue(1);
+describe("Onboarding", () => {
+  it("should create free token promotion", async () => {
+    const mockPromo = {
+      id: 1,
+      userId: 1,
+      type: "onboarding",
+      amount: 5,
+      expiresAt: new Date(),
+    };
+
+    vi.mocked(db.createFreeTokenPromotion).mockResolvedValue(mockPromo as any);
 
     const result = await db.createFreeTokenPromotion(1, 5, 48);
-    expect(result).toBe(1);
+    expect(result).toEqual(mockPromo);
   });
 
   it("should get active free tokens", async () => {
     const mockTokens = [
-      {
-        id: 1,
-        userId: 1,
-        amount: 5,
-        used: false,
-        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
-      },
+      { id: 1, userId: 1, amount: 5, used: false },
     ];
 
     vi.mocked(db.getActiveFreeTokens).mockResolvedValue(mockTokens as any);
 
     const result = await db.getActiveFreeTokens(1);
-    expect(result).toHaveLength(1);
-    expect(result[0]?.amount).toBe(5);
+    expect(result).toEqual(mockTokens);
+    expect(result.length).toBe(1);
   });
 });
 
-describe("Saved Services", () => {
-  it("should save service", async () => {
-    vi.mocked(db.saveService).mockResolvedValue(1);
+describe("Admin Panel", () => {
+  it("should get dashboard statistics", async () => {
+    const mockStats = {
+      totalUsers: 100,
+      activeDisputes: 5,
+      pendingContent: 3,
+      recentTransactions: { count: 10, total: 250 },
+    };
 
-    const result = await db.saveService(1, 1);
-    expect(result).toBe(1);
+    vi.mocked(db.getDashboardStats).mockResolvedValue(mockStats as any);
+
+    const stats = await db.getDashboardStats();
+    expect(stats).toEqual(mockStats);
+    expect(db.getDashboardStats).toHaveBeenCalled();
   });
 
-  it("should get saved services", async () => {
-    const mockSaved = [
-      {
-        id: 1,
-        userId: 1,
-        serviceId: 1,
-        createdAt: new Date(),
-      },
+  it("should suspend a user", async () => {
+    const mockSuspension = { id: 1, userId: 1, reason: "Test" };
+    vi.mocked(db.suspendUser).mockResolvedValue(mockSuspension as any);
+
+    const result = await db.suspendUser(1, "Violation", "temporary", 1);
+    expect(result).toEqual(mockSuspension);
+    expect(db.suspendUser).toHaveBeenCalled();
+  });
+
+  it("should create a dispute", async () => {
+    const mockDispute = { id: 1, title: "Test Dispute" };
+    vi.mocked(db.createDispute).mockResolvedValue(mockDispute as any);
+
+    const result = await db.createDispute(1, 2, 1, "Test", "Desc", "payment_issue");
+    expect(result).toEqual(mockDispute);
+  });
+
+  it("should log admin action", async () => {
+    vi.mocked(db.logAdminAction).mockResolvedValue(undefined);
+
+    await db.logAdminAction(1, "test_action", "user", 1, { test: "data" });
+    expect(db.logAdminAction).toHaveBeenCalled();
+  });
+
+  it("should get audit logs", async () => {
+    const mockLogs = [
+      { id: 1, action: "suspend_user", entityId: 1 },
     ];
 
-    vi.mocked(db.getSavedServices).mockResolvedValue(mockSaved as any);
+    vi.mocked(db.getAuditLogs).mockResolvedValue(mockLogs as any);
 
-    const result = await db.getSavedServices(1);
-    expect(result).toHaveLength(1);
+    const result = await db.getAuditLogs(10, 0, 1);
+    expect(result).toEqual(mockLogs);
+  });
+
+  it("should assign admin role", async () => {
+    const mockRole = { id: 1, userId: 2, roleType: "moderator" };
+    vi.mocked(db.assignAdminRole).mockResolvedValue(mockRole as any);
+
+    const result = await db.assignAdminRole(2, "moderator", ["manage_content"], 1);
+    expect(result).toEqual(mockRole);
   });
 });

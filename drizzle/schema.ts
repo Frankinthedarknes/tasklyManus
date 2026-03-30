@@ -339,3 +339,190 @@ export const blockedUsers = mysqlTable("blockedUsers", {
 
 export type BlockedUser = typeof blockedUsers.$inferSelect;
 export type InsertBlockedUser = typeof blockedUsers.$inferInsert;
+
+/**
+ * Disputes - User-reported issues and conflicts
+ */
+export const disputes = mysqlTable("disputes", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Involved parties
+  reporterId: int("reporterId").notNull().references(() => users.id),
+  respondentId: int("respondentId").notNull().references(() => users.id),
+  serviceId: int("serviceId").notNull().references(() => services.id),
+  escrowTransactionId: int("escrowTransactionId").references(() => escrowTransactions.id),
+  
+  // Dispute details
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  category: mysqlEnum("category", [
+    "payment_issue",
+    "service_not_completed",
+    "quality_issue",
+    "safety_concern",
+    "communication",
+    "other"
+  ]).notNull(),
+  
+  // Evidence
+  evidence: json("evidence"), // Array of file URLs/descriptions
+  
+  // Status
+  status: mysqlEnum("status", [
+    "open",
+    "in_review",
+    "mediation",
+    "resolved",
+    "closed"
+  ]).default("open").notNull(),
+  
+  // Resolution
+  resolution: text("resolution"),
+  resolutionType: mysqlEnum("resolutionType", [
+    "refund",
+    "partial_refund",
+    "no_refund",
+    "service_completion",
+    "other"
+  ]),
+  
+  // Admin assignment
+  assignedAdminId: int("assignedAdminId").references(() => users.id),
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+});
+
+export type Dispute = typeof disputes.$inferSelect;
+export type InsertDispute = typeof disputes.$inferInsert;
+
+/**
+ * Audit logs - Track admin actions
+ */
+export const auditLogs = mysqlTable("auditLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Admin who performed action
+  adminId: int("adminId").notNull().references(() => users.id),
+  
+  // Action details
+  action: varchar("action", { length: 100 }).notNull(), // "suspend_user", "resolve_dispute", "verify_payment"
+  entityType: varchar("entityType", { length: 50 }).notNull(), // "user", "dispute", "transaction"
+  entityId: int("entityId").notNull(),
+  
+  // Changes
+  changes: json("changes"), // { before: {...}, after: {...} }
+  reason: text("reason"),
+  
+  // IP and metadata
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;
+
+/**
+ * User suspensions - Track account restrictions
+ */
+export const userSuspensions = mysqlTable("userSuspensions", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Suspension details
+  reason: text("reason").notNull(),
+  severity: mysqlEnum("severity", ["warning", "temporary", "permanent"]).notNull(),
+  
+  // Duration
+  suspendedAt: timestamp("suspendedAt").defaultNow().notNull(),
+  suspendedUntil: timestamp("suspendedUntil"),
+  
+  // Admin info
+  suspendedByAdminId: int("suspendedByAdminId").notNull().references(() => users.id),
+  
+  // Resolution
+  resolvedAt: timestamp("resolvedAt"),
+  resolvedByAdminId: int("resolvedByAdminId").references(() => users.id),
+});
+
+export type UserSuspension = typeof userSuspensions.$inferSelect;
+export type InsertUserSuspension = typeof userSuspensions.$inferInsert;
+
+/**
+ * Content moderation - Flag inappropriate content
+ */
+export const contentModerations = mysqlTable("contentModerations", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // Content details
+  contentType: mysqlEnum("contentType", [
+    "service_description",
+    "chat_message",
+    "profile_bio",
+    "rating_review",
+    "photo"
+  ]).notNull(),
+  
+  contentId: int("contentId").notNull(),
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Flagging
+  reportedBy: int("reportedBy").references(() => users.id),
+  reason: varchar("reason", { length: 100 }).notNull(),
+  description: text("description"),
+  
+  // Status
+  status: mysqlEnum("status", [
+    "pending",
+    "approved",
+    "rejected",
+    "removed"
+  ]).default("pending").notNull(),
+  
+  // Admin action
+  reviewedByAdminId: int("reviewedByAdminId").references(() => users.id),
+  adminNotes: text("adminNotes"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewedAt"),
+});
+
+export type ContentModeration = typeof contentModerations.$inferSelect;
+export type InsertContentModeration = typeof contentModerations.$inferInsert;
+
+/**
+ * Admin permissions and roles
+ */
+export const adminRoles = mysqlTable("adminRoles", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Role level
+  roleType: mysqlEnum("roleType", [
+    "moderator",      // Can review content and disputes
+    "support",        // Can handle user support
+    "financial",      // Can manage payments and disputes
+    "admin",          // Full access
+    "super_admin"     // Owner level
+  ]).notNull(),
+  
+  // Permissions (JSON for flexibility)
+  permissions: json("permissions"), // ["manage_users", "resolve_disputes", "view_analytics"]
+  
+  // Assignment
+  assignedAt: timestamp("assignedAt").defaultNow().notNull(),
+  assignedByAdminId: int("assignedByAdminId").references(() => users.id),
+  
+  // Status
+  isActive: boolean("isActive").default(true),
+  deactivatedAt: timestamp("deactivatedAt"),
+});
+
+export type AdminRole = typeof adminRoles.$inferSelect;
+export type InsertAdminRole = typeof adminRoles.$inferInsert;

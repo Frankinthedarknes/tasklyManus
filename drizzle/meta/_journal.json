@@ -15,6 +15,13 @@
       "when": 1774832894511,
       "tag": "0001_burly_matthew_murdock",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1774833364852,
+      "tag": "0002_chief_texas_twister",
+      "breakpoints": true
     }
   ]
 }

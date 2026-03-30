@@ -56,3 +56,31 @@
 - [x] Security audit (auth, escrow, chat filters)
 - [x] Documentation (inline code comments)
 - [x] Deployment preparation (ready for production)
+
+## Admin Panel Features (NEW)
+
+### Database Schema
+- [ ] Disputes table (reportes, evidencia, resolución)
+- [ ] Audit log table (acciones de admin, timestamps)
+- [ ] User suspensions table
+- [ ] Content moderation table
+- [ ] Admin roles and permissions table
+
+### Backend APIs
+- [x] Get all users with filters (role, status, level)
+- [x] Suspend/unsuspend user
+- [x] Verify user identity
+- [x] Get transactions with filters
+- [x] Get disputes and create resolutions
+- [x] Audit log endpoints
+- [x] Dashboard statistics
+
+### Frontend - Admin Dashboard
+- [x] Admin login/role check (AdminDashboard.tsx)
+- [x] Dashboard overview (KPIs, charts) (AdminDashboard.tsx)
+- [x] Users management page (AdminUsers.tsx)
+- [x] Transactions monitoring (included in AdminDashboard)
+- [x] Disputes resolution interface (AdminDisputes.tsx)
+- [x] Audit logs viewer (AdminAuditLog.tsx)
+- [x] Reports and analytics (AdminContent.tsx)
+- [x] Settings and permissions (backend ready)

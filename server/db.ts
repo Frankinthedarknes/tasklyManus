@@ -13,6 +13,11 @@ import {
   achievements,
   freeTokenPromotions,
   savedServices,
+  disputes,
+  auditLogs,
+  userSuspensions,
+  contentModerations,
+  adminRoles,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -587,3 +592,379 @@ export async function removeSavedService(userId: number, serviceId: number) {
       )
     );
 }
+
+
+// ============ ADMIN PANEL QUERIES ============
+
+// User Management
+export async function getAllUsers(
+  limit: number = 50,
+  offset: number = 0,
+  filters?: { role?: string; level?: number; verified?: boolean }
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  if (filters?.role) {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.role, filters.role as any))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  return await db
+    .select()
+    .from(users)
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function suspendUser(
+  userId: number,
+  reason: string,
+  severity: "warning" | "temporary" | "permanent",
+  adminId: number,
+  suspendUntil?: Date
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(userSuspensions).values({
+    userId,
+    reason,
+    severity,
+    suspendedByAdminId: adminId,
+    suspendedUntil: suspendUntil,
+  });
+
+  // Log the action
+  await logAdminAction(adminId, "suspend_user", "user", userId, { reason, severity });
+
+  return result[0];
+}
+
+export async function unsuspendUser(userId: number, adminId: number) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(userSuspensions)
+    .set({
+      resolvedAt: new Date(),
+      resolvedByAdminId: adminId,
+    })
+    .where(eq(userSuspensions.userId, userId));
+
+  await logAdminAction(adminId, "unsuspend_user", "user", userId);
+}
+
+export async function getUserSuspensions(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(userSuspensions)
+    .where(eq(userSuspensions.userId, userId))
+    .orderBy(desc(userSuspensions.suspendedAt));
+
+  return result;
+}
+
+// Disputes Management
+export async function createDispute(
+  reporterId: number,
+  respondentId: number,
+  serviceId: number,
+  title: string,
+  description: string,
+  category: string,
+  evidence?: any[]
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(disputes).values({
+    reporterId,
+    respondentId,
+    serviceId,
+    title,
+    description,
+    category: category as any,
+    evidence,
+  });
+
+  return result[0];
+}
+
+export async function getDisputes(
+  status?: string,
+  limit: number = 50,
+  offset: number = 0
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  if (status) {
+    return await db
+      .select()
+      .from(disputes)
+      .where(eq(disputes.status, status as any))
+      .orderBy(desc(disputes.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  return await db
+    .select()
+    .from(disputes)
+    .orderBy(desc(disputes.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function assignDisputeToAdmin(
+  disputeId: number,
+  adminId: number
+) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(disputes)
+    .set({
+      assignedAdminId: adminId,
+      status: "in_review",
+    })
+    .where(eq(disputes.id, disputeId));
+
+  await logAdminAction(adminId, "assign_dispute", "dispute", disputeId);
+}
+
+export async function resolveDispute(
+  disputeId: number,
+  resolution: string,
+  resolutionType: string,
+  adminId: number
+) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(disputes)
+    .set({
+      status: "resolved",
+      resolution,
+      resolutionType: resolutionType as any,
+      resolvedAt: new Date(),
+    })
+    .where(eq(disputes.id, disputeId));
+
+  await logAdminAction(adminId, "resolve_dispute", "dispute", disputeId, {
+    resolution,
+    resolutionType,
+  });
+}
+
+// Audit Logging
+export async function logAdminAction(
+  adminId: number,
+  action: string,
+  entityType: string,
+  entityId: number,
+  changes?: Record<string, any>,
+  reason?: string
+) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.insert(auditLogs).values({
+    adminId,
+    action,
+    entityType,
+    entityId,
+    changes,
+    reason,
+  });
+}
+
+export async function getAuditLogs(
+  limit: number = 100,
+  offset: number = 0,
+  adminId?: number
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  if (adminId) {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.adminId, adminId))
+      .orderBy(desc(auditLogs.createdAt))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  return await db
+    .select()
+    .from(auditLogs)
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+// Content Moderation
+export async function createContentModeration(
+  contentType: string,
+  contentId: number,
+  userId: number,
+  reason: string,
+  description?: string,
+  reportedBy?: number
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(contentModerations).values({
+    contentType: contentType as any,
+    contentId,
+    userId,
+    reason,
+    description,
+    reportedBy,
+  });
+
+  return result[0];
+}
+
+export async function getPendingContentModerations(
+  limit: number = 50,
+  offset: number = 0
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(contentModerations)
+    .where(eq(contentModerations.status, "pending"))
+    .orderBy(asc(contentModerations.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return result;
+}
+
+export async function reviewContentModeration(
+  moderationId: number,
+  status: "approved" | "rejected" | "removed",
+  adminId: number,
+  adminNotes?: string
+) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db
+    .update(contentModerations)
+    .set({
+      status,
+      reviewedByAdminId: adminId,
+      adminNotes,
+      reviewedAt: new Date(),
+    })
+    .where(eq(contentModerations.id, moderationId));
+
+  await logAdminAction(adminId, `review_content_${status}`, "content", moderationId, {
+    adminNotes,
+  });
+}
+
+// Admin Roles
+export async function assignAdminRole(
+  userId: number,
+  roleType: string,
+  permissions: string[],
+  assignedByAdminId: number
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(adminRoles).values({
+    userId,
+    roleType: roleType as any,
+    permissions,
+    assignedByAdminId,
+  });
+
+  await logAdminAction(assignedByAdminId, "assign_admin_role", "user", userId, {
+    roleType,
+    permissions,
+  });
+
+  return result[0];
+}
+
+export async function getAdminRole(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(adminRoles)
+    .where(and(eq(adminRoles.userId, userId), eq(adminRoles.isActive, true)))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Dashboard Statistics
+export async function getDashboardStats() {
+  const db = await getDb();
+  if (!db) return null;
+
+  // Total users
+  const totalUsersResult = await db
+    .select({ count: sql`COUNT(*)` })
+    .from(users);
+  const totalUsers = (totalUsersResult[0]?.count as number) || 0;
+
+  // Active disputes
+  const activeDisputesResult = await db
+    .select({ count: sql`COUNT(*)` })
+    .from(disputes)
+    .where(eq(disputes.status, "open"));
+  const activeDisputes = (activeDisputesResult[0]?.count as number) || 0;
+
+  // Pending content
+  const pendingContentResult = await db
+    .select({ count: sql`COUNT(*)` })
+    .from(contentModerations)
+    .where(eq(contentModerations.status, "pending"));
+  const pendingContent = (pendingContentResult[0]?.count as number) || 0;
+
+  // Recent transactions
+  const recentTransactionsResult = await db
+    .select({ count: sql`COUNT(*)`, total: sql`SUM(amountInTasklys)` })
+    .from(escrowTransactions)
+    .where(
+      gte(
+        escrowTransactions.createdAt,
+        new Date(Date.now() - 24 * 60 * 60 * 1000)
+      )
+    );
+
+  return {
+    totalUsers,
+    activeDisputes,
+    pendingContent,
+    recentTransactions: {
+      count: (recentTransactionsResult[0]?.count as number) || 0,
+      total: (recentTransactionsResult[0]?.total as number) || 0,
+    },
+  };
+}
+
+

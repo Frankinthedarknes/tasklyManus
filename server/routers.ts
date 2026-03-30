@@ -5,6 +5,7 @@ import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
+import { adminRouter } from "./routers/admin";
 
 export const appRouter = router({
   system: systemRouter,
@@ -536,6 +537,9 @@ export const appRouter = router({
       };
     }),
   }),
+
+  // Admin panel
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

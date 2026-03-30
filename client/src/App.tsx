@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import Publish from "./pages/Publish";
 import Chat from "./pages/Chat";
 import Activity from "./pages/Activity";
+import AdminDashboard from "./pages/AdminDashboard";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
@@ -50,6 +51,9 @@ function Router() {
       </Route>
       <Route path={"\app/activity"}>
         {() => <ProtectedRoute component={Activity} />}
+      </Route>
+      <Route path={"\admin"}>
+        {() => <ProtectedRoute component={AdminDashboard} />}
       </Route>
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
