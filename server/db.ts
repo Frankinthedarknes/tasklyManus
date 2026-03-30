@@ -1178,3 +1178,74 @@ export async function getUserFraudAlerts(userId: number, limit = 50) {
 
   return result;
 }
+
+// Get pending reviews for a user (completed services without rating from this user)
+export async function getPendingReviews(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get completed services where user is either creator or assigned, but hasn't rated yet
+  const completedServices = await db
+    .select({
+      serviceId: services.id,
+      serviceName: services.title,
+      serviceStatus: services.status,
+      createdById: services.createdById,
+      assignedToId: services.assignedToId,
+      completedAt: services.completedAt,
+    })
+    .from(services)
+    .where(
+      and(
+        eq(services.status, "completed"),
+        or(
+          eq(services.createdById, userId),
+          eq(services.assignedToId, userId)
+        )
+      )
+    );
+
+  // For each service, check if user has already rated
+  const pendingReviews = [];
+  
+  for (const service of completedServices) {
+    // Determine who the user should rate
+    const otherUserId = service.createdById === userId ? service.assignedToId : service.createdById;
+    
+    if (!otherUserId) continue;
+
+    // Check if rating already exists
+    const existingRating = await db
+      .select()
+      .from(ratings)
+      .where(
+        and(
+          eq(ratings.serviceId, service.serviceId),
+          eq(ratings.raterId, userId),
+          eq(ratings.ratedUserId, otherUserId)
+        )
+      )
+      .limit(1);
+
+    if (existingRating.length === 0) {
+      // Get the other user's name
+      const otherUser = await getUserById(otherUserId);
+      
+      pendingReviews.push({
+        serviceId: service.serviceId,
+        serviceName: service.serviceName,
+        providerName: otherUser?.name || "Usuario",
+        ratedUserId: otherUserId,
+        completedAt: service.completedAt,
+      });
+    }
+  }
+
+  return pendingReviews;
+}
+
+// Check if user can interact (no pending reviews)
+export async function canUserInteract(userId: number): Promise<boolean> {
+  const pendingReviews = await getPendingReviews(userId);
+  return pendingReviews.length === 0;
+}

@@ -280,3 +280,40 @@
 - [x] Crear página FeedWithMenu con todo integrado
 - [x] Guardar filtros en localStorage
 - [x] Indicador de filtros activos
+
+
+## Mandatory Review System (NEW - IN PROGRESS)
+
+### Backend Implementation
+- [x] Add getPendingReviews helper function to db.ts
+- [x] Add canUserInteract helper function to db.ts
+- [x] Create getPendingReviews endpoint in ratings router
+- [x] Create canInteract endpoint in ratings router
+- [x] Implement review blocking logic
+
+### Frontend Implementation
+- [x] Create ReviewModal component with star rating and comment validation
+- [x] Integrate ReviewModal in Feed.tsx
+- [x] Add pending reviews alert banner in Feed
+- [x] Block swipe right (Like) when pending reviews exist
+- [x] Allow swipe left (Dislike) regardless of pending reviews
+- [x] Show button to complete pending reviews
+- [x] Refetch pending reviews after submission
+
+### Testing
+- [x] Create ratings.test.ts with 12 unit tests
+- [x] Create Feed.test.tsx with integration tests
+- [x] Test getPendingReviews functionality
+- [x] Test canUserInteract functionality
+- [x] Test review blocking on swipe right
+- [x] Test alert display for pending reviews
+- [x] 88 total tests passing
+
+### Features Implemented
+- [x] Automatic detection of completed services without reviews
+- [x] Bidirectional review support (both parties must review)
+- [x] Mandatory 5-star rating system
+- [x] Minimum 10 character review requirement
+- [x] Visual alert banner for pending reviews
+- [x] Modal blocking until review is submitted
+- [x] Automatic unblock after review completion

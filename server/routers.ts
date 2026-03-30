@@ -496,6 +496,16 @@ export const appRouter = router({
         const ratings = await db.getUserRatings(input.userId);
         return ratings;
       }),
+
+    getPendingReviews: protectedProcedure.query(async ({ ctx }) => {
+      const pendingReviews = await db.getPendingReviews(ctx.user.id);
+      return pendingReviews;
+    }),
+
+    canInteract: protectedProcedure.query(async ({ ctx }) => {
+      const canInteract = await db.canUserInteract(ctx.user.id);
+      return { canInteract };
+    })
   }),
 
   // Gamification

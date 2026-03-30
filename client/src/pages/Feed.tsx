@@ -3,7 +3,9 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Loader2, Heart, X, MapPin, Star, Shield } from "lucide-react";
+import { Loader2, Heart, X, MapPin, Star, Shield, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import ReviewModal from "@/components/ReviewModal";
 import AppLayout from "./AppLayout";
 
 interface ServiceCard {
@@ -27,6 +29,12 @@ export default function Feed() {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [pendingReview, setPendingReview] = useState<any>(null);
+
+  // Check for pending reviews
+  const { data: pendingReviews, refetch: refetchPendingReviews } = trpc.ratings.getPendingReviews.useQuery();
+  const { data: canInteractData } = trpc.ratings.canInteract.useQuery();
 
   // Get user location
   useEffect(() => {
@@ -70,6 +78,14 @@ export default function Feed() {
   const saveService = trpc.services.save.useMutation();
 
   const handleSwipeRight = async () => {
+    // Check if user has pending reviews
+    if (pendingReviews && pendingReviews.length > 0) {
+      toast.error("Debes completar las reseñas pendientes antes de interactuar con servicios");
+      setPendingReview(pendingReviews[0]);
+      setShowReviewModal(true);
+      return;
+    }
+
     if (currentIndex < services.length) {
       const service = services[currentIndex];
       await saveService.mutateAsync({ serviceId: service.id });
@@ -121,9 +137,40 @@ export default function Feed() {
     currentService.longitude
   );
 
+  const handleReviewSubmit = () => {
+    setShowReviewModal(false);
+    setPendingReview(null);
+    refetchPendingReviews();
+    toast.success("¡Gracias por tu reseña! Ahora puedes continuar");
+  };
+
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto">
+        {/* Pending Reviews Alert */}
+        {pendingReviews && pendingReviews.length > 0 && (
+          <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-yellow-300 font-semibold text-sm">Reseña Pendiente</p>
+              <p className="text-yellow-200 text-xs mt-1">
+                Tienes {pendingReviews.length} reseña{pendingReviews.length > 1 ? 's' : ''} pendiente{pendingReviews.length > 1 ? 's' : ''}. 
+                Complétala para poder interactuar con más servicios.
+              </p>
+              <Button
+                onClick={() => {
+                  setPendingReview(pendingReviews[0]);
+                  setShowReviewModal(true);
+                }}
+                size="sm"
+                className="mt-2 h-7 text-xs"
+              >
+                Completar Reseña
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">¿Qué hay pa' hacer?</h1>
@@ -212,6 +259,18 @@ export default function Feed() {
         <div className="mt-8 text-center text-sm text-slate-400">
           {currentIndex + 1} de {services.length}
         </div>
+
+        {/* Review Modal */}
+        {pendingReview && (
+          <ReviewModal
+            isOpen={showReviewModal}
+            serviceId={pendingReview.serviceId}
+            serviceName={pendingReview.serviceName}
+            providerName={pendingReview.providerName}
+            onClose={() => setShowReviewModal(false)}
+            onSubmit={handleReviewSubmit}
+          />
+        )}
       </div>
     </AppLayout>
   );
