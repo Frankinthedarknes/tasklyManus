@@ -6,6 +6,7 @@ import { Loader2, Edit2, LogOut, Zap, TrendingUp, Award } from "lucide-react";
 import AppLayout from "./AppLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import BuyTasklysModal from "@/components/BuyTasklysModal";
+import TrustBadges from "@/components/TrustBadges";
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -68,6 +69,11 @@ export default function Profile() {
               <div className="flex-1">
                 <h1 className="text-2xl font-bold text-white">{profile?.name}</h1>
                 <p className="text-slate-400 text-sm">{profile?.email}</p>
+                {user?.id && (
+                  <div className="mt-2">
+                    <TrustBadges userId={user.id} size="md" />
+                  </div>
+                )}
               </div>
               <Button
                 onClick={() => setEditing(!editing)}

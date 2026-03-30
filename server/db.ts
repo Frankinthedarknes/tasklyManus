@@ -23,6 +23,7 @@ import {
   invoices,
   refunds,
   fraudAlerts,
+  trustBadges,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -1248,4 +1249,163 @@ export async function getPendingReviews(userId: number) {
 export async function canUserInteract(userId: number): Promise<boolean> {
   const pendingReviews = await getPendingReviews(userId);
   return pendingReviews.length === 0;
+}
+
+// Trust Badges
+export async function calculateAndAwardBadges(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get all ratings for this user
+  const userRatings = await db
+    .select()
+    .from(ratings)
+    .where(eq(ratings.ratedUserId, userId));
+
+  if (userRatings.length === 0) return [];
+
+  const fiveStarCount = userRatings.filter((r) => r.score === 5).length;
+  const totalReviews = userRatings.length;
+  const averageRating = userRatings.reduce((sum, r) => sum + (r.score ?? 0), 0) / totalReviews;
+
+  const badgesToAward: any[] = [];
+
+  // Trusted: 10+ five-star reviews
+  if (fiveStarCount >= 10) {
+    badgesToAward.push({
+      type: "trusted",
+      title: "Confiable",
+      description: "10+ reseñas de 5 estrellas",
+      icon: "⭐",
+      color: "blue",
+      fiveStarCount,
+      totalReviews,
+      averageRating: averageRating.toString(),
+    });
+  }
+
+  // Highly Trusted: 25+ five-star reviews
+  if (fiveStarCount >= 25) {
+    badgesToAward.push({
+      type: "highly_trusted",
+      title: "Altamente Confiable",
+      description: "25+ reseñas de 5 estrellas",
+      icon: "✨",
+      color: "purple",
+      fiveStarCount,
+      totalReviews,
+      averageRating: averageRating.toString(),
+    });
+  }
+
+  // Verified Expert: 50+ five-star reviews
+  if (fiveStarCount >= 50) {
+    badgesToAward.push({
+      type: "verified_expert",
+      title: "Experto Verificado",
+      description: "50+ reseñas de 5 estrellas",
+      icon: "🏆",
+      color: "gold",
+      fiveStarCount,
+      totalReviews,
+      averageRating: averageRating.toString(),
+    });
+  }
+
+  // Community Leader: 100+ five-star reviews
+  if (fiveStarCount >= 100) {
+    badgesToAward.push({
+      type: "community_leader",
+      title: "Líder de Comunidad",
+      description: "100+ reseñas de 5 estrellas",
+      icon: "👑",
+      color: "gold",
+      fiveStarCount,
+      totalReviews,
+      averageRating: averageRating.toString(),
+    });
+  }
+
+  // Perfect Rating: 100% five-star average (min 5 reviews)
+  if (totalReviews >= 5 && averageRating === 5.0) {
+    badgesToAward.push({
+      type: "perfect_rating",
+      title: "Calificación Perfecta",
+      description: "100% reseñas de 5 estrellas",
+      icon: "💎",
+      color: "cyan",
+      fiveStarCount,
+      totalReviews,
+      averageRating: averageRating.toString(),
+    });
+  }
+
+  // Professional: Consistent high quality (avg >= 4.8 with 10+ reviews)
+  if (totalReviews >= 10 && averageRating >= 4.8) {
+    badgesToAward.push({
+      type: "professional",
+      title: "Profesional",
+      description: "Calidad consistentemente alta (4.8+ promedio)",
+      icon: "💼",
+      color: "slate",
+      fiveStarCount,
+      totalReviews,
+      averageRating: averageRating.toString(),
+    });
+  }
+
+  // Award badges
+  const awardedBadges = [];
+  for (const badge of badgesToAward) {
+    // Check if badge already exists
+    const existing = await db
+      .select()
+      .from(trustBadges)
+      .where(
+        and(
+          eq(trustBadges.userId, userId),
+          eq(trustBadges.type, badge.type as any),
+          eq(trustBadges.isActive, true)
+        )
+      )
+      .limit(1);
+
+    if (existing.length === 0) {
+      const result = await db.insert(trustBadges).values({
+        userId,
+        ...badge,
+      });
+      awardedBadges.push(result);
+    }
+  }
+
+  return awardedBadges;
+}
+
+export async function getUserBadges(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(trustBadges)
+    .where(and(eq(trustBadges.userId, userId), eq(trustBadges.isActive, true)))
+    .orderBy(desc(trustBadges.earnedAt));
+
+  return result;
+}
+
+export async function revokeBadge(badgeId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .update(trustBadges)
+    .set({
+      isActive: false,
+      revokedAt: new Date(),
+    })
+    .where(eq(trustBadges.id, badgeId));
+
+  return result;
 }

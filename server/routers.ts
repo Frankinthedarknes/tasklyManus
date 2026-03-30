@@ -505,7 +505,21 @@ export const appRouter = router({
     canInteract: protectedProcedure.query(async ({ ctx }) => {
       const canInteract = await db.canUserInteract(ctx.user.id);
       return { canInteract };
-    })
+    }),
+
+    calculateBadges: protectedProcedure
+      .input(z.object({ userId: z.number() }))
+      .mutation(async ({ input }) => {
+        const badges = await db.calculateAndAwardBadges(input.userId);
+        return { success: true, badgesAwarded: badges.length };
+      }),
+
+    getBadges: publicProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const badges = await db.getUserBadges(input.userId);
+        return badges;
+      })
   }),
 
   // Gamification

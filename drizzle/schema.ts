@@ -728,3 +728,45 @@ export const fraudAlerts = mysqlTable("fraudAlerts", {
 });
 export type FraudAlert = typeof fraudAlerts.$inferSelect;
 export type InsertFraudAlert = typeof fraudAlerts.$inferInsert;
+
+/**
+ * Trust Badges: visual indicators of user trustworthiness based on reviews
+ */
+export const trustBadges = mysqlTable("trustBadges", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Badge type
+  type: mysqlEnum("type", [
+    "trusted",           // 10+ five-star reviews
+    "highly_trusted",    // 25+ five-star reviews
+    "verified_expert",   // 50+ five-star reviews
+    "community_leader",  // 100+ five-star reviews
+    "perfect_rating",    // 100% five-star average (min 5 reviews)
+    "responsive",        // Quick response time (avg < 2 hours)
+    "professional",      // Consistent high quality
+  ]).notNull(),
+  
+  // Badge metadata
+  title: varchar("title", { length: 100 }).notNull(),
+  description: text("description"),
+  icon: varchar("icon", { length: 50 }).notNull(), // emoji or icon name
+  color: varchar("color", { length: 20 }).default("blue"), // badge color
+  
+  // Criteria met
+  fiveStarCount: int("fiveStarCount").default(0),
+  totalReviews: int("totalReviews").default(0),
+  averageRating: decimal("averageRating", { precision: 3, scale: 2 }).default("0.00"),
+  
+  // Status
+  isActive: boolean("isActive").default(true),
+  earnedAt: timestamp("earnedAt").defaultNow().notNull(),
+  revokedAt: timestamp("revokedAt"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TrustBadge = typeof trustBadges.$inferSelect;
+export type InsertTrustBadge = typeof trustBadges.$inferInsert;
