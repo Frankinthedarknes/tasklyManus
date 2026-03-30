@@ -522,3 +522,9 @@
 - [x] Import ProfileEditorS3 component in Profile.tsx
 - [x] Render modal when editing state is true
 - [x] Close modal on save/cancel
+
+
+## HTML/DOCTYPE Fixes (NEW - COMPLETED)
+
+- [x] Fix DOCTYPE from <!doctype html> to <!DOCTYPE html>
+- [x] Verify HTML5 compliance
