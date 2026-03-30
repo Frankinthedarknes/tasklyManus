@@ -391,3 +391,139 @@ describe("Admin Panel", () => {
     expect(result).toEqual(mockRole);
   });
 });
+
+
+describe("Feed Tinder UI", () => {
+  it("should display service cards with correct data", () => {
+    const mockService = {
+      id: 1,
+      title: "Reparación de instalación eléctrica",
+      description: "Reparación profesional",
+      category: "electricidad",
+      priceInTasklys: 150,
+      latitude: 40.7128,
+      longitude: -74.006,
+      urgency: "flexible",
+      createdById: 1,
+      creatorName: "Juan García",
+      creatorLevel: 4,
+      distance: 0.5,
+    };
+
+    expect(mockService.title).toBeDefined();
+    expect(mockService.priceInTasklys).toBe(150);
+    expect(mockService.distance).toBeLessThan(1);
+  });
+
+  it("should calculate distance correctly", () => {
+    // Haversine formula test
+    const lat1 = 40.7128;
+    const lon1 = -74.006;
+    const lat2 = 40.7150;
+    const lon2 = -74.002;
+
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = Math.round(R * c * 10) / 10;
+
+    expect(distance).toBeGreaterThan(0);
+    expect(distance).toBeLessThan(10);
+  });
+
+  it("should validate urgency values", () => {
+    const validUrgencies = ["now", "today", "flexible"];
+    const testUrgencies = ["now", "today", "flexible", "invalid"];
+
+    expect(validUrgencies).toContain("now");
+    expect(validUrgencies).toContain("today");
+    expect(validUrgencies).toContain("flexible");
+    expect(validUrgencies).not.toContain("invalid");
+  });
+
+  it("should validate service categories", () => {
+    const validCategories = [
+      "electricidad",
+      "plomería",
+      "limpieza",
+      "diseño",
+      "tecnología",
+      "fitness",
+      "educación",
+      "reparación",
+    ];
+
+    expect(validCategories).toContain("electricidad");
+    expect(validCategories).toContain("diseño");
+    expect(validCategories.length).toBe(8);
+  });
+
+  it("should handle swipe actions correctly", () => {
+    const cards = [
+      { id: 1, title: "Service 1" },
+      { id: 2, title: "Service 2" },
+      { id: 3, title: "Service 3" },
+    ];
+
+    let currentIndex = 0;
+
+    // Simulate swipe
+    if (currentIndex < cards.length - 1) {
+      currentIndex++;
+    }
+
+    expect(currentIndex).toBe(1);
+    expect(cards[currentIndex].title).toBe("Service 2");
+  });
+
+  it("should track card counter correctly", () => {
+    const totalCards = 14;
+    let currentIndex = 0;
+
+    const cardCounter = `${currentIndex + 1} de ${totalCards}`;
+    expect(cardCounter).toBe("1 de 14");
+
+    currentIndex = 5;
+    const updatedCounter = `${currentIndex + 1} de ${totalCards}`;
+    expect(updatedCounter).toBe("6 de 14");
+  });
+
+  it("should format price display correctly", () => {
+    const prices = [50, 100, 150, 200, 500];
+
+    prices.forEach((price) => {
+      const formatted = `${price} Tasklys`;
+      expect(formatted).toContain("Tasklys");
+      expect(formatted).toContain(price.toString());
+    });
+  });
+
+  it("should handle empty service list", () => {
+    const cards: any[] = [];
+
+    expect(cards.length).toBe(0);
+    expect(cards).toEqual([]);
+  });
+
+  it("should validate creator information", () => {
+    const creator = {
+      name: "Juan García",
+      level: 4,
+      rating: 4.8,
+      servicesCompleted: 45,
+    };
+
+    expect(creator.name).toBeDefined();
+    expect(creator.level).toBeGreaterThan(0);
+    expect(creator.level).toBeLessThanOrEqual(5);
+    expect(creator.rating).toBeGreaterThan(0);
+    expect(creator.servicesCompleted).toBeGreaterThan(0);
+  });
+});

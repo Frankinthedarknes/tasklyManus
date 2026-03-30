@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Feed from "./pages/Feed";
+import FeedTinder from "./pages/FeedTinder";
 import Profile from "./pages/Profile";
 import Publish from "./pages/Publish";
 import Chat from "./pages/Chat";
@@ -38,7 +39,7 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/app/feed"}>
-        {() => <ProtectedRoute component={Feed} />}
+        {() => <ProtectedRoute component={FeedTinder} />}
       </Route>
       <Route path={"\app/profile"}>
         {() => <ProtectedRoute component={Profile} />}

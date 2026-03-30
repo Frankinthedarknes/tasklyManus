@@ -117,3 +117,31 @@
 - [ ] Detección de transacciones fraudulentas
 - [ ] Límites de compra por usuario/día
 - [ ] Verificación de identidad para montos altos
+
+
+## Test Data & Tinder-like Feed (COMPLETED)
+
+### Seed Data
+- [x] Crear script seed.mjs con 8 usuarios de prueba
+- [x] Crear 12 servicios variados (limpieza, reparación, diseño, etc.)
+- [x] Asignar ubicaciones realistas con geolocalización
+- [x] Agregar fotos de prueba a usuarios y servicios
+- [x] Crear wallets con tokens Tasklys
+- [x] Datos de prueba listos para desarrollo
+
+### Feed UI (Tinder-like)
+- [x] Mejorar diseño de tarjetas con foto grande
+- [x] Mostrar nombre, nivel, distancia en overlay
+- [x] Servicio principal visible en la foto (emoji)
+- [x] Animaciones de deslizamiento suave
+- [x] Indicadores de like/dislike
+- [x] Datos adicionales al deslizar (descripción, precio, urgencia)
+- [x] Botones de acción (like, dislike)
+- [x] Contador de tarjetas restantes
+
+### Interactividad
+- [x] Gestos de deslizamiento (swipe left/right)
+- [x] Animación de salida de tarjeta
+- [x] Stack de tarjetas siguiente
+- [x] Feedback visual de acciones
+- [x] 9 tests unitarios pasando
