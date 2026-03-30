@@ -9,6 +9,7 @@ import {
   boolean,
   json,
   float,
+  unique,
 } from "drizzle-orm/mysql-core";
 
 /**
@@ -770,3 +771,84 @@ export const trustBadges = mysqlTable("trustBadges", {
 
 export type TrustBadge = typeof trustBadges.$inferSelect;
 export type InsertTrustBadge = typeof trustBadges.$inferInsert;
+
+/**
+ * User Skills/Tasks: what services a user can provide
+ */
+export const userSkills = mysqlTable("userSkills", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Skill details
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  category: varchar("category", { length: 50 }).notNull(),
+  
+  // Verification
+  verified: boolean("verified").default(false),
+  yearsOfExperience: int("yearsOfExperience"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserSkill = typeof userSkills.$inferSelect;
+export type InsertUserSkill = typeof userSkills.$inferInsert;
+
+/**
+ * User Media: photos and videos for profile
+ */
+export const userMedia = mysqlTable("userMedia", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Media type and content
+  type: mysqlEnum("type", ["photo", "video"]).notNull(),
+  url: text("url").notNull(),
+  
+  // Metadata
+  title: varchar("title", { length: 255 }),
+  description: text("description"),
+  
+  // Display order
+  displayOrder: int("displayOrder").default(0),
+  
+  // Status
+  isMain: boolean("isMain").default(false), // Main profile photo
+  isPublic: boolean("isPublic").default(true),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserMedia = typeof userMedia.$inferSelect;
+export type InsertUserMedia = typeof userMedia.$inferInsert;
+
+/**
+ * Service Selections: track which services user has liked/saved
+ */
+export const serviceSelections = mysqlTable("serviceSelections", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull().references(() => users.id),
+  serviceId: int("serviceId").notNull().references(() => services.id),
+  
+  // Selection type
+  type: mysqlEnum("type", ["liked", "saved", "contacted"]).default("liked"),
+  
+  // Interaction metadata
+  interactionCount: int("interactionCount").default(1),
+  lastInteractedAt: timestamp("lastInteractedAt").defaultNow().notNull(),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  
+  // Unique constraint: one selection per user per service
+}, (table) => ({
+  userServiceUnique: unique("user_service_unique").on(table.userId, table.serviceId),
+}));
+
+export type ServiceSelection = typeof serviceSelections.$inferSelect;
+export type InsertServiceSelection = typeof serviceSelections.$inferInsert;

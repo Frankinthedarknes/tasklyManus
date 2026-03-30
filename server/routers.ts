@@ -222,6 +222,130 @@ export const appRouter = router({
       }),
   }),
 
+  // Service Selections
+  serviceSelections: router({
+    save: protectedProcedure
+      .input(
+        z.object({
+          serviceId: z.number(),
+          type: z.enum(["liked", "saved", "contacted"]).default("liked"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.saveServiceSelection(
+          ctx.user.id,
+          input.serviceId,
+          input.type
+        );
+        return { success: !!result };
+      }),
+
+    getByUser: protectedProcedure
+      .input(
+        z.object({
+          type: z.enum(["liked", "saved", "contacted"]).optional(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const selections = await db.getUserServiceSelections(
+          ctx.user.id,
+          input.type
+        );
+        return selections;
+      }),
+  }),
+
+  // User Media
+  userMedia: router({
+    add: protectedProcedure
+      .input(
+        z.object({
+          type: z.enum(["photo", "video"]),
+          url: z.string().url(),
+          title: z.string().optional(),
+          description: z.string().optional(),
+          isMain: z.boolean().default(false),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.addUserMedia(
+          ctx.user.id,
+          input.type,
+          input.url,
+          input.title,
+          input.description,
+          input.isMain
+        );
+        return { success: !!result };
+      }),
+
+    getByUser: protectedProcedure
+      .input(z.object({ type: z.enum(["photo", "video"]).optional() }))
+      .query(async ({ ctx, input }) => {
+        const media = await db.getUserMedia(ctx.user.id, input.type);
+        return media;
+      }),
+
+    setMain: protectedProcedure
+      .input(z.object({ mediaId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.setMainUserPhoto(input.mediaId, ctx.user.id);
+        return { success: !!result };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ mediaId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.deleteUserMedia(input.mediaId);
+        return { success: !!result };
+      }),
+
+    reorder: protectedProcedure
+      .input(z.object({ mediaIds: z.array(z.number()) }))
+      .mutation(async ({ input }) => {
+        const result = await db.updateMediaDisplayOrder(
+          0,
+          input.mediaIds
+        );
+        return { success: result };
+      }),
+  }),
+
+  // User Skills
+  userSkills: router({
+    add: protectedProcedure
+      .input(
+        z.object({
+          name: z.string(),
+          category: z.string(),
+          description: z.string().optional(),
+          yearsOfExperience: z.number().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const result = await db.addUserSkill(
+          ctx.user.id,
+          input.name,
+          input.category,
+          input.description,
+          input.yearsOfExperience
+        );
+        return { success: !!result };
+      }),
+
+    getByUser: protectedProcedure.query(async ({ ctx }) => {
+      const skills = await db.getUserSkills(ctx.user.id);
+      return skills;
+    }),
+
+    delete: protectedProcedure
+      .input(z.object({ skillId: z.number() }))
+      .mutation(async ({ input }) => {
+        const result = await db.deleteUserSkill(input.skillId);
+        return { success: !!result };
+      }),
+  }),
+
   // Services
   services: router({
     create: protectedProcedure

@@ -24,6 +24,9 @@ import {
   refunds,
   fraudAlerts,
   trustBadges,
+  userSkills,
+  userMedia,
+  serviceSelections,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -1594,4 +1597,236 @@ export async function calculateRecommendationScore(
   }
 
   return badgeWeight + ratingWeight + reviewWeight + categoryWeight;
+}
+
+
+// Service Selections (Liked/Saved Services)
+export async function saveServiceSelection(
+  userId: number,
+  serviceId: number,
+  type: "liked" | "saved" | "contacted" = "liked"
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  try {
+    // Try to update if exists
+    const existing = await db
+      .select()
+      .from(serviceSelections)
+      .where(
+        and(
+          eq(serviceSelections.userId, userId),
+          eq(serviceSelections.serviceId, serviceId)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update existing selection
+      return await db
+        .update(serviceSelections)
+        .set({
+          type,
+          interactionCount: (existing[0].interactionCount || 0) + 1,
+          lastInteractedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(serviceSelections.userId, userId),
+            eq(serviceSelections.serviceId, serviceId)
+          )
+        );
+    } else {
+      // Create new selection
+      return await db.insert(serviceSelections).values({
+        userId,
+        serviceId,
+        type,
+      });
+    }
+  } catch (error) {
+    console.error("Error saving service selection:", error);
+    return undefined;
+  }
+}
+
+export async function getUserServiceSelections(
+  userId: number,
+  type?: "liked" | "saved" | "contacted"
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = type
+    ? and(
+        eq(serviceSelections.userId, userId),
+        eq(serviceSelections.type, type)
+      )
+    : eq(serviceSelections.userId, userId);
+
+  return await db
+    .select({
+      id: serviceSelections.id,
+      serviceId: serviceSelections.serviceId,
+      type: serviceSelections.type,
+      interactionCount: serviceSelections.interactionCount,
+      lastInteractedAt: serviceSelections.lastInteractedAt,
+      service: services,
+    })
+    .from(serviceSelections)
+    .innerJoin(services, eq(serviceSelections.serviceId, services.id))
+    .where(conditions)
+    .orderBy(desc(serviceSelections.lastInteractedAt));
+}
+
+// User Skills
+export async function addUserSkill(
+  userId: number,
+  name: string,
+  category: string,
+  description?: string,
+  yearsOfExperience?: number
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  return await db.insert(userSkills).values({
+    userId,
+    name,
+    category,
+    description,
+    yearsOfExperience,
+  });
+}
+
+export async function getUserSkills(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return await db
+    .select()
+    .from(userSkills)
+    .where(eq(userSkills.userId, userId))
+    .orderBy(desc(userSkills.createdAt));
+}
+
+export async function deleteUserSkill(skillId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  return await db.delete(userSkills).where(eq(userSkills.id, skillId));
+}
+
+// User Media (Photos and Videos)
+export async function addUserMedia(
+  userId: number,
+  type: "photo" | "video",
+  url: string,
+  title?: string,
+  description?: string,
+  isMain: boolean = false
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  // If setting as main, unset other main media
+  if (isMain) {
+    await db
+      .update(userMedia)
+      .set({ isMain: false })
+      .where(
+        and(eq(userMedia.userId, userId), eq(userMedia.type, type))
+      );
+  }
+
+  return await db.insert(userMedia).values({
+    userId,
+    type,
+    url,
+    title,
+    description,
+    isMain,
+  });
+}
+
+export async function getUserMedia(userId: number, type?: "photo" | "video") {
+  const db = await getDb();
+  if (!db) return [];
+
+  const conditions = type
+    ? and(
+        eq(userMedia.userId, userId),
+        eq(userMedia.type, type)
+      )
+    : eq(userMedia.userId, userId);
+
+  return await db
+    .select()
+    .from(userMedia)
+    .where(conditions)
+    .orderBy(asc(userMedia.displayOrder), desc(userMedia.createdAt));
+}
+
+export async function getMainUserPhoto(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(userMedia)
+    .where(
+      and(
+        eq(userMedia.userId, userId),
+        eq(userMedia.type, "photo"),
+        eq(userMedia.isMain, true)
+      )
+    )
+    .limit(1);
+
+  return result[0];
+}
+
+export async function setMainUserPhoto(mediaId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  // Unset other main photos
+  await db
+    .update(userMedia)
+    .set({ isMain: false })
+    .where(
+      and(eq(userMedia.userId, userId), eq(userMedia.type, "photo"))
+    );
+
+  // Set this one as main
+  return await db
+    .update(userMedia)
+    .set({ isMain: true })
+    .where(eq(userMedia.id, mediaId));
+}
+
+export async function deleteUserMedia(mediaId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  return await db.delete(userMedia).where(eq(userMedia.id, mediaId));
+}
+
+export async function updateMediaDisplayOrder(
+  userId: number,
+  mediaIds: number[]
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  // Update display order for each media
+  for (let i = 0; i < mediaIds.length; i++) {
+    await db
+      .update(userMedia)
+      .set({ displayOrder: i })
+      .where(eq(userMedia.id, mediaIds[i]));
+  }
+
+  return true;
 }

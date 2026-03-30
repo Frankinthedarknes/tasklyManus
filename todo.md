@@ -422,3 +422,78 @@
 - [x] Service count and review count visible
 - [x] Professional card design with hover effects
 - [x] Clear call-to-action button
+
+
+## Profile Features - Photo, Skills, and Service Selections (NEW - COMPLETED)
+
+### Database Implementation
+- [x] Create userSkills table with name, category, yearsOfExperience
+- [x] Create userMedia table with photo/video support, isMain flag
+- [x] Create serviceSelections table for tracking liked/saved/contacted services
+- [x] Add foreign key relationships and unique constraints
+- [x] Execute migration to create all three tables
+
+### Backend Helpers (db.ts)
+- [x] saveServiceSelection() - Save/update service selections
+- [x] getUserServiceSelections() - Retrieve user's service selections
+- [x] addUserSkill() - Add skill to user profile
+- [x] getUserSkills() - Get all user skills
+- [x] deleteUserSkill() - Remove skill
+- [x] addUserMedia() - Add photo or video
+- [x] getUserMedia() - Get media by type
+- [x] getMainUserPhoto() - Get main profile photo
+- [x] setMainUserPhoto() - Set photo as main
+- [x] deleteUserMedia() - Remove media
+- [x] updateMediaDisplayOrder() - Reorder media
+
+### Backend APIs (tRPC Endpoints)
+- [x] serviceSelections.save - Save service selection
+- [x] serviceSelections.getByUser - Get user's selections
+- [x] userMedia.add - Add photo or video
+- [x] userMedia.getByUser - Get user's media
+- [x] userMedia.setMain - Set main photo
+- [x] userMedia.delete - Delete media
+- [x] userMedia.reorder - Reorder media display
+- [x] userSkills.add - Add skill
+- [x] userSkills.getByUser - Get user's skills
+- [x] userSkills.delete - Delete skill
+
+### Frontend Components
+- [x] Create ProfileEditor component with three tabs:
+  - Photo tab: Upload main photo, set as main, delete
+  - Skills tab: Add/remove skills with category and experience
+  - Videos tab: Upload presentation videos, manage
+- [x] Photo upload with preview
+- [x] Skill management with category and years of experience
+- [x] Video upload support
+- [x] Media reordering capability
+- [x] Delete functionality for all media types
+
+### Features
+- [x] Photo selection and management
+- [x] Main photo designation
+- [x] Skills/tasks listing with categories
+- [x] Years of experience tracking
+- [x] Video uploads for profile
+- [x] Service selection tracking (liked/saved/contacted)
+- [x] Media display order management
+- [x] Persistent storage of all selections
+
+### Testing
+- [x] Create profile-features.test.ts with 18 comprehensive tests
+- [x] Test skill CRUD operations
+- [x] Test media CRUD operations
+- [x] Test main photo functionality
+- [x] Test media type filtering
+- [x] Test integration scenarios
+- [x] 145 total tests passing (75 features + 14 badges + 12 ratings + 1 auth + 25 recommendations + 18 profile)
+
+### User Experience
+- [x] Modal-based profile editor
+- [x] Tab navigation for different sections
+- [x] Drag-and-drop file upload areas
+- [x] Visual feedback for main photo
+- [x] Loading states during upload
+- [x] Success/error toast notifications
+- [x] Easy deletion with confirmation
+- [x] Professional card-based design
