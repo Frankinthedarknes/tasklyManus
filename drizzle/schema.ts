@@ -526,3 +526,205 @@ export const adminRoles = mysqlTable("adminRoles", {
 
 export type AdminRole = typeof adminRoles.$inferSelect;
 export type InsertAdminRole = typeof adminRoles.$inferInsert;
+
+
+/**
+ * Payment transactions and Stripe integration
+ */
+export const paymentTransactions = mysqlTable("paymentTransactions", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  // User and package info
+  userId: int("userId").notNull().references(() => users.id),
+  packageId: varchar("packageId", { length: 10 }).notNull(), // "5", "20", "50", "100"
+  tasklyAmount: int("tasklyAmount").notNull(),
+  priceUSD: decimal("priceUSD", { precision: 10, scale: 2 }).notNull(),
+  
+  // Stripe integration
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).unique(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  
+  // Status
+  status: mysqlEnum("status", [
+    "pending",        // Awaiting payment
+    "processing",     // Payment being processed
+    "succeeded",      // Payment successful, tokens delivered
+    "failed",         // Payment failed
+    "cancelled",      // User cancelled
+    "refunded",       // Refund issued
+  ]).default("pending").notNull(),
+  
+  // Payment method
+  paymentMethod: mysqlEnum("paymentMethod", [
+    "card",           // Credit/debit card via Stripe
+    "stripe_wallet",  // Apple Pay, Google Pay via Stripe
+    "paypal",         // PayPal (future)
+    "bank_transfer",  // Bank transfer (future)
+  ]).default("card").notNull(),
+  
+  // Card details (encrypted in production)
+  cardLast4: varchar("cardLast4", { length: 4 }),
+  cardBrand: varchar("cardBrand", { length: 50 }), // visa, mastercard, etc.
+  
+  // Fraud detection
+  riskLevel: mysqlEnum("riskLevel", ["low", "medium", "high"]).default("low"),
+  fraudCheckResult: json("fraudCheckResult"), // Stripe fraud detection data
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  processedAt: timestamp("processedAt"),
+  completedAt: timestamp("completedAt"),
+  failedAt: timestamp("failedAt"),
+  refundedAt: timestamp("refundedAt"),
+  
+  // Notes
+  failureReason: text("failureReason"),
+  adminNotes: text("adminNotes"),
+});
+export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
+export type InsertPaymentTransaction = typeof paymentTransactions.$inferInsert;
+
+/**
+ * Payment attempts for retry logic and fraud detection
+ */
+export const paymentAttempts = mysqlTable("paymentAttempts", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  transactionId: int("transactionId").notNull().references(() => paymentTransactions.id),
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Attempt details
+  attemptNumber: int("attemptNumber").notNull(),
+  stripeEventId: varchar("stripeEventId", { length: 255 }),
+  
+  // Result
+  result: mysqlEnum("result", ["success", "failed", "pending"]).notNull(),
+  errorCode: varchar("errorCode", { length: 50 }),
+  errorMessage: text("errorMessage"),
+  
+  // IP and device info for fraud detection
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type PaymentAttempt = typeof paymentAttempts.$inferSelect;
+export type InsertPaymentAttempt = typeof paymentAttempts.$inferInsert;
+
+/**
+ * Invoices and receipts
+ */
+export const invoices = mysqlTable("invoices", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  transactionId: int("transactionId").notNull().references(() => paymentTransactions.id),
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Invoice details
+  invoiceNumber: varchar("invoiceNumber", { length: 50 }).unique().notNull(),
+  invoiceDate: timestamp("invoiceDate").defaultNow().notNull(),
+  dueDate: timestamp("dueDate"),
+  
+  // Amounts
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).default("0"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  
+  // Status
+  status: mysqlEnum("invoiceStatus", [
+    "draft",
+    "sent",
+    "paid",
+    "cancelled",
+    "refunded",
+  ]).default("draft").notNull(),
+  
+  // PDF storage
+  pdfUrl: text("pdfUrl"),
+  
+  // Timestamps
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  sentAt: timestamp("sentAt"),
+  paidAt: timestamp("paidAt"),
+  cancelledAt: timestamp("cancelledAt"),
+});
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = typeof invoices.$inferInsert;
+
+/**
+ * Refund requests and history
+ */
+export const refunds = mysqlTable("refunds", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  transactionId: int("transactionId").notNull().references(() => paymentTransactions.id),
+  userId: int("userId").notNull().references(() => users.id),
+  
+  // Refund details
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  reason: text("reason").notNull(),
+  
+  // Stripe refund
+  stripeRefundId: varchar("stripeRefundId", { length: 255 }).unique(),
+  
+  // Status
+  status: mysqlEnum("refundStatus", [
+    "pending",
+    "processing",
+    "succeeded",
+    "failed",
+    "cancelled",
+  ]).default("pending").notNull(),
+  
+  // Approval
+  requestedAt: timestamp("requestedAt").defaultNow().notNull(),
+  approvedAt: timestamp("approvedAt"),
+  approvedByAdminId: int("approvedByAdminId").references(() => users.id),
+  processedAt: timestamp("processedAt"),
+  
+  // Notes
+  adminNotes: text("adminNotes"),
+});
+export type Refund = typeof refunds.$inferSelect;
+export type InsertRefund = typeof refunds.$inferInsert;
+
+/**
+ * Fraud detection and suspicious activity log
+ */
+export const fraudAlerts = mysqlTable("fraudAlerts", {
+  id: int("id").autoincrement().primaryKey(),
+  
+  userId: int("userId").notNull().references(() => users.id),
+  transactionId: int("transactionId").references(() => paymentTransactions.id),
+  
+  // Alert details
+  alertType: mysqlEnum("alertType", [
+    "multiple_failed_attempts",
+    "unusual_location",
+    "high_velocity",
+    "card_testing",
+    "chargeback_risk",
+    "velocity_limit_exceeded",
+  ]).notNull(),
+  
+  description: text("description"),
+  severity: mysqlEnum("severity", ["low", "medium", "high", "critical"]).notNull(),
+  
+  // Action taken
+  action: mysqlEnum("action", [
+    "flagged",
+    "blocked",
+    "requires_verification",
+    "manual_review",
+    "no_action",
+  ]).default("flagged").notNull(),
+  
+  // Resolution
+  resolvedAt: timestamp("resolvedAt"),
+  resolvedByAdminId: int("resolvedByAdminId").references(() => users.id),
+  resolutionNotes: text("resolutionNotes"),
+  
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type FraudAlert = typeof fraudAlerts.$inferSelect;
+export type InsertFraudAlert = typeof fraudAlerts.$inferInsert;

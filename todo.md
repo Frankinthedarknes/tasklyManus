@@ -84,3 +84,36 @@
 - [x] Audit logs viewer (AdminAuditLog.tsx)
 - [x] Reports and analytics (AdminContent.tsx)
 - [x] Settings and permissions (backend ready)
+
+
+## Token Purchase System (NEW - REVIEW)
+
+### Backend - Compra de Tasklys
+- [ ] Auditar API de compra actual (paquetes, precios)
+- [ ] Validación de montos y límites
+- [ ] Prevención de fraude (rate limiting, detección de patrones)
+- [ ] Integración con Stripe para pagos con tarjeta
+- [ ] Integración con PayPal
+- [ ] Confirmación de transacción y webhook handling
+- [ ] Entrega automática de tokens tras confirmación
+- [ ] Reembolsos y disputas de pago
+- [ ] Auditoría de transacciones financieras
+- [ ] Reportes de ingresos
+
+### Frontend - UI de Compra
+- [ ] Página de paquetes de Tasklys con precios claros
+- [ ] Selector de método de pago (Stripe, PayPal, etc.)
+- [ ] Formulario seguro de pago
+- [ ] Confirmación antes de procesar
+- [ ] Recibo y confirmación post-compra
+- [ ] Historial de compras del usuario
+- [ ] Facturación y descarga de recibos
+- [ ] Manejo de errores y reintentos
+
+### Seguridad
+- [ ] Validación de CVV y datos de tarjeta
+- [ ] Encriptación de datos sensibles
+- [ ] PCI DSS compliance
+- [ ] Detección de transacciones fraudulentas
+- [ ] Límites de compra por usuario/día
+- [ ] Verificación de identidad para montos altos

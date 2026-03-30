@@ -18,6 +18,11 @@ import {
   userSuspensions,
   contentModerations,
   adminRoles,
+  paymentTransactions,
+  paymentAttempts,
+  invoices,
+  refunds,
+  fraudAlerts,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -968,3 +973,208 @@ export async function getDashboardStats() {
 }
 
 
+
+
+// Payment transaction helpers
+export async function createPaymentTransaction(
+  userId: number,
+  packageId: string,
+  tasklyAmount: number,
+  priceUSD: number
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(paymentTransactions).values({
+    userId,
+    packageId,
+    tasklyAmount,
+    priceUSD: priceUSD.toString(),
+    status: "pending",
+    paymentMethod: "card",
+  });
+
+  return result;
+}
+
+export async function getPaymentTransaction(transactionId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(paymentTransactions)
+    .where(eq(paymentTransactions.id, transactionId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updatePaymentTransactionStatus(
+  transactionId: number,
+  status: string,
+  stripePaymentIntentId?: string
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updates: any = {
+    status,
+    processedAt: new Date(),
+  };
+
+  if (stripePaymentIntentId) {
+    updates.stripePaymentIntentId = stripePaymentIntentId;
+  }
+
+  if (status === "succeeded") {
+    updates.completedAt = new Date();
+  } else if (status === "failed") {
+    updates.failedAt = new Date();
+  }
+
+  const result = await db
+    .update(paymentTransactions)
+    .set(updates)
+    .where(eq(paymentTransactions.id, transactionId));
+
+  return result;
+}
+
+export async function getUserPaymentHistory(userId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(paymentTransactions)
+    .where(eq(paymentTransactions.userId, userId))
+    .orderBy(desc(paymentTransactions.createdAt))
+    .limit(limit);
+
+  return result;
+}
+
+export async function createPaymentAttempt(
+  transactionId: number,
+  userId: number,
+  attemptNumber: number,
+  result: string,
+  errorCode?: string,
+  errorMessage?: string
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const insertResult = await db.insert(paymentAttempts).values({
+    transactionId,
+    userId,
+    attemptNumber,
+    result: result as any,
+    errorCode,
+    errorMessage,
+  });
+
+  return insertResult;
+}
+
+export async function createInvoice(
+  transactionId: number,
+  userId: number,
+  invoiceNumber: string,
+  subtotal: number,
+  tax: number,
+  total: number
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(invoices).values({
+    transactionId,
+    userId,
+    invoiceNumber,
+    subtotal: subtotal.toString(),
+    tax: tax.toString(),
+    total: total.toString(),
+    status: "draft",
+  });
+
+  return result;
+}
+
+export async function updateInvoiceStatus(invoiceId: number, status: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const updates: any = { status };
+
+  if (status === "paid") {
+    updates.paidAt = new Date();
+  } else if (status === "sent") {
+    updates.sentAt = new Date();
+  } else if (status === "cancelled") {
+    updates.cancelledAt = new Date();
+  }
+
+  const result = await db
+    .update(invoices)
+    .set(updates)
+    .where(eq(invoices.id, invoiceId));
+
+  return result;
+}
+
+export async function createRefund(
+  transactionId: number,
+  userId: number,
+  amount: number,
+  reason: string
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(refunds).values({
+    transactionId,
+    userId,
+    amount: amount.toString(),
+    reason,
+  });
+
+  return result;
+}
+
+export async function createFraudAlert(
+  userId: number,
+  alertType: string,
+  severity: string,
+  description?: string,
+  transactionId?: number
+) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.insert(fraudAlerts).values({
+    userId,
+    transactionId,
+    alertType: alertType as any,
+    severity: severity as any,
+    description,
+    action: "flagged",
+  });
+
+  return result;
+}
+
+export async function getUserFraudAlerts(userId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select()
+    .from(fraudAlerts)
+    .where(eq(fraudAlerts.userId, userId))
+    .orderBy(desc(fraudAlerts.createdAt))
+    .limit(limit);
+
+  return result;
+}
