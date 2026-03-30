@@ -167,11 +167,11 @@ export function validateFileSize(
   size: number,
   mediaType: "photo" | "video"
 ): void {
-  const maxPhotoSize = 5 * 1024 * 1024; // 5MB
+  const maxPhotoSize = 10 * 1024 * 1024; // 10MB
   const maxVideoSize = 50 * 1024 * 1024; // 50MB
 
   if (mediaType === "photo" && size > maxPhotoSize) {
-    throw new Error(`Photo size exceeds 5MB limit. Got: ${(size / 1024 / 1024).toFixed(2)}MB`);
+    throw new Error(`Photo size exceeds 10MB limit. Got: ${(size / 1024 / 1024).toFixed(2)}MB`);
   }
 
   if (mediaType === "video" && size > maxVideoSize) {

@@ -528,3 +528,13 @@
 
 - [x] Fix DOCTYPE from <!doctype html> to <!DOCTYPE html>
 - [x] Verify HTML5 compliance
+
+
+## Photo Upload Error - Investigation (COMPLETED)
+
+- [x] Debug photo upload endpoint error - Found: Photo size limit was 5MB, user photo was 6.43MB
+- [x] Increase photo size limit from 5MB to 10MB
+- [x] Update ProfileEditorS3 UI text to reflect new limit
+- [x] Update S3 upload tests with new 10MB limit
+- [x] Add edge case tests for 10MB and 11MB photos
+- [x] All 165 tests passing (20 S3 tests including new edge cases)

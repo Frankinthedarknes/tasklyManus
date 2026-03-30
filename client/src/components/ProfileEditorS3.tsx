@@ -185,7 +185,7 @@ export default function ProfileEditorS3({ onClose, onSave }: ProfileEditorS3Prop
                 <label className="cursor-pointer block">
                   <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
                   <p className="text-slate-300 font-medium">Sube tu foto principal</p>
-                  <p className="text-sm text-slate-500">PNG, JPG hasta 5MB</p>
+                  <p className="text-sm text-slate-500">PNG, JPG hasta 10MB</p>
                   <input
                     type="file"
                     accept="image/*"
@@ -385,10 +385,10 @@ export default function ProfileEditorS3({ onClose, onSave }: ProfileEditorS3Prop
           )}
 
           {/* Info Box */}
-          <div className="mt-6 p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg flex gap-2">
+            <div className="mt-6 p-3 bg-blue-900/20 border border-blue-700/50 rounded-lg flex gap-2">
             <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-blue-300">
-              Los archivos se suben directamente a S3. Máximo 5MB para fotos y 50MB para videos.
+              Los archivos se suben directamente a S3. Máximo 10MB para fotos y 50MB para videos.
             </p>
           </div>
 

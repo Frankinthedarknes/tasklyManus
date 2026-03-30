@@ -37,18 +37,18 @@ describe("S3 Upload - File Validation", () => {
   });
 
   describe("validateFileSize", () => {
-    it("should accept photos under 5MB", () => {
+    it("should accept photos under 10MB", () => {
       const size1MB = 1 * 1024 * 1024;
-      const size5MB = 5 * 1024 * 1024;
+      const size10MB = 10 * 1024 * 1024;
 
       expect(() => validateFileSize(size1MB, "photo")).not.toThrow();
-      expect(() => validateFileSize(size5MB, "photo")).not.toThrow();
+      expect(() => validateFileSize(size10MB, "photo")).not.toThrow();
     });
 
-    it("should reject photos over 5MB", () => {
-      const size6MB = 6 * 1024 * 1024;
-      expect(() => validateFileSize(size6MB, "photo")).toThrow(
-        /Photo size exceeds 5MB limit/
+    it("should reject photos over 10MB", () => {
+      const size11MB = 11 * 1024 * 1024;
+      expect(() => validateFileSize(size11MB, "photo")).toThrow(
+        /Photo size exceeds 10MB limit/
       );
     });
 
@@ -102,6 +102,20 @@ describe("S3 Upload - File Validation", () => {
       expect(() => {
         validateMediaFile("video.mp4", "video");
         validateFileSize(100 * 1024 * 1024, "video");
+      }).toThrow();
+    });
+
+    it("should accept 10MB photo", () => {
+      expect(() => {
+        validateMediaFile("photo.jpg", "photo");
+        validateFileSize(10 * 1024 * 1024, "photo");
+      }).not.toThrow();
+    });
+
+    it("should reject 11MB photo", () => {
+      expect(() => {
+        validateMediaFile("photo.jpg", "photo");
+        validateFileSize(11 * 1024 * 1024, "photo");
       }).toThrow();
     });
   });
