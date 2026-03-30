@@ -171,6 +171,57 @@ export const appRouter = router({
       }),
   }),
 
+  // Recommendations
+  recommendations: router({
+    getByCategory: publicProcedure
+      .input(z.object({ category: z.string(), limit: z.number().default(10) }))
+      .query(async ({ input }) => {
+        const providers = await db.getRecommendedProviders(
+          input.category,
+          input.limit,
+          1
+        );
+        return providers;
+      }),
+
+    getTopProviders: publicProcedure
+      .input(z.object({ category: z.string(), limit: z.number().default(5) }))
+      .query(async ({ input }) => {
+        const providers = await db.getTopProvidersByCategory(
+          input.category,
+          input.limit
+        );
+        return providers;
+      }),
+
+    getByBadgeType: publicProcedure
+      .input(
+        z.object({
+          badgeType: z.string(),
+          category: z.string().optional(),
+          limit: z.number().default(10),
+        })
+      )
+      .query(async ({ input }) => {
+        const providers = await db.getProvidersByBadgeType(
+          input.badgeType,
+          input.category,
+          input.limit
+        );
+        return providers;
+      }),
+
+    getScore: publicProcedure
+      .input(z.object({ userId: z.number(), category: z.string().optional() }))
+      .query(async ({ input }) => {
+        const score = await db.calculateRecommendationScore(
+          input.userId,
+          input.category
+        );
+        return { score };
+      }),
+  }),
+
   // Services
   services: router({
     create: protectedProcedure

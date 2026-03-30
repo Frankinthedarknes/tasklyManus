@@ -1409,3 +1409,189 @@ export async function revokeBadge(badgeId: number) {
 
   return result;
 }
+
+
+// Recommendation System
+export async function getRecommendedProviders(
+  category: string,
+  limit: number = 10,
+  minBadges: number = 1
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get services in this category with provider info
+  const recommendedServices = await db
+    .select({
+      serviceId: services.id,
+      serviceTitle: services.title,
+      serviceDescription: services.description,
+      priceInTasklys: services.priceInTasklys,
+      urgency: services.urgency,
+      createdById: services.createdById,
+      createdAt: services.createdAt,
+      userId: users.id,
+      userName: users.name,
+      userLevel: users.level,
+      averageRating: users.averageRating,
+      totalRatings: users.totalRatings,
+    })
+    .from(services)
+    .innerJoin(users, eq(services.createdById, users.id))
+    .where(eq(services.category, category))
+    .limit(limit * 3); // Get more to filter by badges
+
+  if (recommendedServices.length === 0) return [];
+
+  // Enrich with badge information
+  const enrichedServices = [];
+
+  for (const service of recommendedServices) {
+    const badges = await getUserBadges(service.createdById);
+    const badgeCount = badges.length;
+
+    // Only include if meets minimum badge requirement
+    if (badgeCount >= minBadges) {
+      enrichedServices.push({
+        ...service,
+        badgeCount,
+        badges: badges.map((b: any) => ({
+          type: b.type,
+          title: b.title,
+          icon: b.icon,
+        })),
+        // Calculate recommendation score
+        recommendationScore:
+          (badgeCount * 30) + // Badge weight
+          (parseFloat(service.averageRating as any) * 20) + // Rating weight
+          (Math.min(service.totalRatings as any, 100) * 0.5), // Review count weight
+      });
+    }
+  }
+
+  // Sort by recommendation score and return top results
+  return enrichedServices
+    .sort((a, b) => b.recommendationScore - a.recommendationScore)
+    .slice(0, limit);
+}
+
+export async function getProvidersByBadgeType(
+  badgeType: string,
+  category?: string,
+  limit: number = 10
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  let whereConditions = and(
+    eq(trustBadges.type, badgeType as any),
+    eq(trustBadges.isActive, true)
+  );
+
+  if (category) {
+    whereConditions = and(
+      eq(trustBadges.type, badgeType as any),
+      eq(trustBadges.isActive, true),
+      eq(services.category, category)
+    );
+  }
+
+  const results = await db
+    .select({
+      userId: users.id,
+      userName: users.name,
+      userLevel: users.level,
+      averageRating: users.averageRating,
+      totalRatings: users.totalRatings,
+      photoUrl: users.photoUrl,
+      badgeTitle: trustBadges.title,
+      badgeIcon: trustBadges.icon,
+      badgeEarnedAt: trustBadges.earnedAt,
+    })
+    .from(trustBadges)
+    .innerJoin(users, eq(trustBadges.userId, users.id))
+    .leftJoin(services, eq(services.createdById, users.id))
+    .where(whereConditions)
+    .limit(limit);
+
+  return results;
+}
+
+export async function getTopProvidersByCategory(
+  category: string,
+  limit: number = 5
+) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get top providers in category by average rating and badge count
+  const topProviders = await db
+    .select({
+      userId: users.id,
+      userName: users.name,
+      userLevel: users.level,
+      averageRating: users.averageRating,
+      totalRatings: users.totalRatings,
+      photoUrl: users.photoUrl,
+      servicesCount: sql<number>`COUNT(DISTINCT ${services.id})`,
+    })
+    .from(users)
+    .leftJoin(services, eq(services.createdById, users.id))
+    .where(eq(services.category, category))
+    .groupBy(users.id)
+    .orderBy(desc(users.averageRating), desc(users.totalRatings))
+    .limit(limit);
+
+  // Enrich with badge information
+  const enriched = [];
+  for (const provider of topProviders) {
+    const badges = await getUserBadges(provider.userId);
+    enriched.push({
+      ...provider,
+      badgeCount: badges.length,
+      badges: badges.map((b: any) => ({
+        type: b.type,
+        title: b.title,
+        icon: b.icon,
+      })),
+    });
+  }
+
+  return enriched;
+}
+
+export async function calculateRecommendationScore(
+  userId: number,
+  category?: string
+): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const user = await getUserById(userId);
+  if (!user) return 0;
+
+  const badges = await getUserBadges(userId);
+  const badgeWeight = badges.length * 30;
+
+  const ratingWeight = (parseFloat(user.averageRating as any) || 0) * 20;
+
+  const reviewWeight = Math.min((user.totalRatings || 0), 100) * 0.5;
+
+  // If category specified, add category relevance
+  let categoryWeight = 0;
+  if (category) {
+    const categoryServices = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(services)
+      .where(
+        and(
+          eq(services.createdById, userId),
+          eq(services.category, category)
+        )
+      );
+
+    categoryWeight = (categoryServices[0]?.count || 0) * 5;
+  }
+
+  return badgeWeight + ratingWeight + reviewWeight + categoryWeight;
+}
