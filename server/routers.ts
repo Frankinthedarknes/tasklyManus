@@ -265,6 +265,49 @@ export const appRouter = router({
         await db.removeSavedService(ctx.user.id, input.serviceId);
         return { success: true };
       }),
+
+    getFiltered: protectedProcedure
+      .input(
+        z.object({
+          latitude: z.number(),
+          longitude: z.number(),
+          maxDistance: z.number().default(50),
+          categories: z.array(z.string()).optional(),
+          priceMin: z.number().default(0),
+          priceMax: z.number().default(10000),
+          urgencies: z.array(z.enum(["now", "today", "flexible"])).optional(),
+          limit: z.number().default(50),
+        })
+      )
+      .query(async ({ input }) => {
+        const services = await db.getNearbyServices(
+          input.latitude,
+          input.longitude,
+          input.maxDistance,
+          undefined,
+          input.limit
+        );
+
+        // Apply filters
+        return services.filter((service: any) => {
+          // Category filter
+          if (input.categories && input.categories.length > 0) {
+            if (!input.categories.includes(service.category)) return false;
+          }
+
+          // Price filter
+          if (service.priceInTasklys < input.priceMin || service.priceInTasklys > input.priceMax) {
+            return false;
+          }
+
+          // Urgency filter
+          if (input.urgencies && input.urgencies.length > 0) {
+            if (!input.urgencies.includes(service.urgency)) return false;
+          }
+
+          return true;
+        });
+      }),
   }),
 
   // Escrow and payments

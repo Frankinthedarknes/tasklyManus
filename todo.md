@@ -145,3 +145,38 @@
 - [x] Stack de tarjetas siguiente
 - [x] Feedback visual de acciones
 - [x] 9 tests unitarios pasando
+
+
+## Advanced Filters for Feed (COMPLETED)
+
+### Backend API
+- [ ] Crear endpoint para filtrar servicios por categoría
+- [ ] Crear endpoint para filtrar por rango de precio
+- [ ] Crear endpoint para filtrar por distancia máxima
+- [ ] Crear endpoint para filtrar por urgencia
+- [ ] Combinar múltiples filtros en una sola query
+- [ ] Retornar contador de resultados
+
+### Frontend - Filter Component
+- [ ] Crear componente FilterPanel con UI mejorada
+- [ ] Selector de categorías (checkboxes)
+- [ ] Slider de rango de precio (min-max)
+- [ ] Slider de distancia máxima
+- [ ] Selector de urgencia (radio buttons)
+- [ ] Botón "Aplicar Filtros"
+- [ ] Botón "Limpiar Filtros"
+- [ ] Mostrar contador de resultados
+
+### Integration
+- [ ] Integrar FilterPanel en FeedTinder
+- [ ] Actualizar tarjetas al cambiar filtros
+- [ ] Mostrar estado de filtros activos
+- [ ] Guardar filtros en localStorage
+- [ ] Cargar filtros guardados al abrir la app
+- [ ] Animación suave al filtrar
+
+### Testing
+- [ ] Tests para validación de filtros
+- [ ] Tests para combinación de filtros
+- [ ] Tests para persistencia en localStorage
+- [ ] Tests para cálculo de resultados

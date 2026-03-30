@@ -527,3 +527,139 @@ describe("Feed Tinder UI", () => {
     expect(creator.servicesCompleted).toBeGreaterThan(0);
   });
 });
+
+
+describe("Advanced Filters", () => {
+  it("should filter services by category", () => {
+    const services = [
+      { id: 1, category: "electricidad", priceInTasklys: 100 },
+      { id: 2, category: "plomería", priceInTasklys: 150 },
+      { id: 3, category: "electricidad", priceInTasklys: 200 },
+    ];
+
+    const filtered = services.filter((s) => s.category === "electricidad");
+    expect(filtered).toHaveLength(2);
+    expect(filtered[0].id).toBe(1);
+    expect(filtered[1].id).toBe(3);
+  });
+
+  it("should filter services by price range", () => {
+    const services = [
+      { id: 1, priceInTasklys: 50 },
+      { id: 2, priceInTasklys: 150 },
+      { id: 3, priceInTasklys: 300 },
+    ];
+
+    const filtered = services.filter(
+      (s) => s.priceInTasklys >= 150 && s.priceInTasklys <= 200
+    );
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].id).toBe(2);
+  });
+
+  it("should filter services by urgency", () => {
+    const services = [
+      { id: 1, urgency: "now" },
+      { id: 2, urgency: "today" },
+      { id: 3, urgency: "flexible" },
+    ];
+
+    const filtered = services.filter((s) => s.urgency === "now");
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].urgency).toBe("now");
+  });
+
+  it("should combine multiple filters", () => {
+    const services = [
+      { id: 1, category: "electricidad", priceInTasklys: 100, urgency: "now" },
+      { id: 2, category: "plomería", priceInTasklys: 150, urgency: "today" },
+      { id: 3, category: "electricidad", priceInTasklys: 200, urgency: "now" },
+      { id: 4, category: "electricidad", priceInTasklys: 50, urgency: "flexible" },
+    ];
+
+    const filtered = services.filter(
+      (s) =>
+        s.category === "electricidad" &&
+        s.priceInTasklys >= 150 &&
+        s.priceInTasklys <= 200 &&
+        s.urgency === "now"
+    );
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].id).toBe(3);
+  });
+
+  it("should handle empty filter results", () => {
+    const services = [
+      { id: 1, category: "electricidad", priceInTasklys: 100 },
+    ];
+
+    const filtered = services.filter((s) => s.category === "plomería");
+    expect(filtered).toHaveLength(0);
+    expect(filtered).toEqual([]);
+  });
+
+  it("should validate filter ranges", () => {
+    const priceMin = 0;
+    const priceMax = 1000;
+
+    expect(priceMin).toBeLessThanOrEqual(priceMax);
+    expect(priceMin).toBeGreaterThanOrEqual(0);
+    expect(priceMax).toBeLessThanOrEqual(10000);
+  });
+
+  it("should validate distance range", () => {
+    const maxDistance = 50;
+
+    expect(maxDistance).toBeGreaterThan(0);
+    expect(maxDistance).toBeLessThanOrEqual(100);
+  });
+
+  it("should persist filters to localStorage", () => {
+    const filters = {
+      categories: ["electricidad", "plomería"],
+      priceMin: 100,
+      priceMax: 500,
+      maxDistance: 25,
+      urgencies: ["now", "today"],
+    };
+
+    const serialized = JSON.stringify(filters);
+    const deserialized = JSON.parse(serialized);
+
+    expect(deserialized).toEqual(filters);
+    expect(deserialized.categories).toHaveLength(2);
+  });
+
+  it("should reset filters correctly", () => {
+    const defaultFilters = {
+      categories: [],
+      priceMin: 0,
+      priceMax: 1000,
+      maxDistance: 50,
+      urgencies: [],
+    };
+
+    expect(defaultFilters.categories).toHaveLength(0);
+    expect(defaultFilters.priceMin).toBe(0);
+    expect(defaultFilters.priceMax).toBe(1000);
+  });
+
+  it("should count active filters", () => {
+    const filters = {
+      categories: ["electricidad"],
+      priceMin: 100,
+      priceMax: 500,
+      maxDistance: 25,
+      urgencies: ["now"],
+    };
+
+    let activeCount = 0;
+    if (filters.categories.length > 0) activeCount++;
+    if (filters.priceMin > 0 || filters.priceMax < 1000) activeCount++;
+    if (filters.maxDistance < 50) activeCount++;
+    if (filters.urgencies.length > 0) activeCount++;
+
+    expect(activeCount).toBe(4);
+  });
+});

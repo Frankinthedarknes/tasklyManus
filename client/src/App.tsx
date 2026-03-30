@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Feed from "./pages/Feed";
 import FeedTinder from "./pages/FeedTinder";
+import FeedTinderWithFilters from "./pages/FeedTinderWithFilters";
 import Profile from "./pages/Profile";
 import Publish from "./pages/Publish";
 import Chat from "./pages/Chat";
@@ -39,7 +40,7 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/app/feed"}>
-        {() => <ProtectedRoute component={FeedTinder} />}
+        {() => <ProtectedRoute component={FeedTinderWithFilters} />}
       </Route>
       <Route path={"\app/profile"}>
         {() => <ProtectedRoute component={Profile} />}
