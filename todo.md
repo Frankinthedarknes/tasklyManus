@@ -538,3 +538,13 @@
 - [x] Update S3 upload tests with new 10MB limit
 - [x] Add edge case tests for 10MB and 11MB photos
 - [x] All 165 tests passing (20 S3 tests including new edge cases)
+
+
+## Photo Upload JSON Response Error (COMPLETED)
+
+- [x] Debug endpoint returning HTML instead of JSON - Found: /api/upload endpoint didn't exist
+- [x] Fixed useS3Upload to use tRPC userMedia.add instead of /api/upload
+- [x] Convert file to base64 data URL for transmission
+- [x] Handle correct tRPC response format (success: boolean)
+- [x] All 165 tests passing
+- [x] TypeScript compilation successful

@@ -28,6 +28,7 @@ export function useS3Upload(options?: UseS3UploadOptions) {
   });
 
   const validateUpload = trpc.userMedia.getUploadUrl.useMutation();
+  const saveMedia = trpc.userMedia.add.useMutation();
 
   const uploadFile = useCallback(
     async (
@@ -65,24 +66,20 @@ export function useS3Upload(options?: UseS3UploadOptions) {
           });
         }, 200);
 
-        // Create FormData for upload
-        const formData = new FormData();
-        formData.append("file", file);
-
-        // Upload to storage endpoint
-        // In production, this would use presigned URLs or direct S3 upload
-        const uploadResponse = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
+        // Convert buffer to base64 for transmission
+        const base64 = btoa(
+          new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), "")
+        );
+        const dataUrl = `data:${file.type || "application/octet-stream"};base64,${base64}`;
 
         clearInterval(progressInterval);
 
-        if (!uploadResponse.ok) {
-          throw new Error(`Upload failed: ${uploadResponse.statusText}`);
-        }
-
-        const result = await uploadResponse.json();
+        // Save media via tRPC
+        const result = await saveMedia.mutateAsync({
+          type: mediaType,
+          url: dataUrl,
+          title: file.name,
+        });
 
         // Complete progress
         setProgress({
@@ -91,12 +88,16 @@ export function useS3Upload(options?: UseS3UploadOptions) {
           percentage: 100,
         });
 
+        if (!result.success) {
+          throw new Error("Failed to save media");
+        }
+
         options?.onProgress?.(progress);
-        options?.onSuccess?.(result.url, result.key);
+        options?.onSuccess?.(dataUrl, file.name);
 
         toast.success(`${mediaType === "photo" ? "Foto" : "Video"} subido exitosamente`);
 
-        return { url: result.url, key: result.key };
+        return { url: dataUrl, key: file.name };
       } catch (error) {
         const err = error instanceof Error ? error : new Error("Upload failed");
         toast.error(err.message);
@@ -107,7 +108,7 @@ export function useS3Upload(options?: UseS3UploadOptions) {
         setProgress({ loaded: 0, total: 0, percentage: 0 });
       }
     },
-    [validateUpload, options]
+    [validateUpload, saveMedia, options]
   );
 
   return {
