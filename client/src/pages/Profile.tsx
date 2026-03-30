@@ -7,6 +7,7 @@ import AppLayout from "./AppLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import BuyTasklysModal from "@/components/BuyTasklysModal";
 import TrustBadges from "@/components/TrustBadges";
+import ProfileEditorS3 from "@/components/ProfileEditorS3";
 
 export default function Profile() {
   const { user, logout } = useAuth();
@@ -272,6 +273,12 @@ export default function Profile() {
           onClose={() => setShowBuyModal(false)}
           onSuccess={() => setShowBuyModal(false)}
         />
+        {editing && (
+          <ProfileEditorS3
+            onClose={() => setEditing(false)}
+            onSave={() => setEditing(false)}
+          />
+        )}
     </AppLayout>
   );
 }
