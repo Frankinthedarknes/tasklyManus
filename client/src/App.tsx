@@ -5,15 +5,13 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
-import Feed from "./pages/Feed";
-import FeedTinder from "./pages/FeedTinder";
-import FeedTinderWithFilters from "./pages/FeedTinderWithFilters";
 import FeedTinderFinal from "./pages/FeedTinderFinal";
 import Profile from "./pages/Profile";
-import Publish from "./pages/Publish";
 import Chat from "./pages/Chat";
 import Activity from "./pages/Activity";
+import Publish from "./pages/Publish";
 import AdminDashboard from "./pages/AdminDashboard";
+import TransactionHistory from "./pages/TransactionHistory";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
@@ -43,19 +41,22 @@ function Router() {
       <Route path={"/app/feed"}>
         {() => <ProtectedRoute component={FeedTinderFinal} />}
       </Route>
-      <Route path={"\app/profile"}>
+      <Route path={"/app/profile"}>
         {() => <ProtectedRoute component={Profile} />}
       </Route>
-      <Route path={"\app/publish"}>
+      <Route path={"/app/publish"}>
         {() => <ProtectedRoute component={Publish} />}
       </Route>
-      <Route path={"\app/chat"}>
+      <Route path={"/app/chat"}>
         {() => <ProtectedRoute component={Chat} />}
       </Route>
-      <Route path={"\app/activity"}>
+      <Route path={"/app/activity"}>
         {() => <ProtectedRoute component={Activity} />}
       </Route>
-      <Route path={"\admin"}>
+      <Route path={"/app/transactions"}>
+        {() => <ProtectedRoute component={TransactionHistory} />}
+      </Route>
+      <Route path={"/admin"}>
         {() => <ProtectedRoute component={AdminDashboard} />}
       </Route>
       <Route path={"/404"} component={NotFound} />

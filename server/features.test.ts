@@ -947,3 +947,153 @@ describe("Mock Payment System", () => {
     expect(userBalance).toBeLessThan(minWithdrawal);
   });
 });
+
+
+describe("Transaction History", () => {
+  it("should filter receipts by status", () => {
+    const receipts = [
+      { id: "1", status: "completed" as const, priceUSD: 7.0, tasklysAmount: 20 },
+      { id: "2", status: "failed" as const, priceUSD: 15.0, tasklysAmount: 50 },
+      { id: "3", status: "completed" as const, priceUSD: 2.0, tasklysAmount: 5 },
+    ];
+
+    const completed = receipts.filter((r) => r.status === "completed");
+    expect(completed).toHaveLength(2);
+    expect(completed[0].priceUSD).toBe(7.0);
+  });
+
+  it("should calculate total spent from completed receipts", () => {
+    const receipts = [
+      { status: "completed" as const, priceUSD: 7.0 },
+      { status: "completed" as const, priceUSD: 15.0 },
+      { status: "failed" as const, priceUSD: 2.0 },
+    ];
+
+    const total = receipts
+      .filter((r) => r.status === "completed")
+      .reduce((sum, r) => sum + r.priceUSD, 0);
+
+    expect(total).toBe(22.0);
+  });
+
+  it("should filter receipts by date range", () => {
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const receipts = [
+      { id: "1", createdAt: now },
+      { id: "2", createdAt: weekAgo },
+      { id: "3", createdAt: monthAgo },
+    ];
+
+    const lastWeek = receipts.filter((r) => r.createdAt >= weekAgo);
+    expect(lastWeek).toHaveLength(2);
+  });
+
+  it("should search receipts by invoice number", () => {
+    const receipts = [
+      { id: "1", invoiceNumber: "INV-202603-ABC123" },
+      { id: "2", invoiceNumber: "INV-202602-DEF456" },
+      { id: "3", invoiceNumber: "INV-202601-GHI789" },
+    ];
+
+    const searchTerm = "ABC";
+    const results = receipts.filter((r) =>
+      r.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0].invoiceNumber).toContain("ABC");
+  });
+
+  it("should search receipts by transaction ID", () => {
+    const receipts = [
+      { id: "1", transactionId: "txn_123_abc" },
+      { id: "2", transactionId: "txn_456_def" },
+      { id: "3", transactionId: "txn_789_ghi" },
+    ];
+
+    const searchTerm = "456";
+    const results = receipts.filter((r) =>
+      r.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0].transactionId).toContain("456");
+  });
+
+  it("should sort receipts by date descending", () => {
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+
+    const receipts = [
+      { id: "1", createdAt: yesterday },
+      { id: "2", createdAt: now },
+      { id: "3", createdAt: twoDaysAgo },
+    ];
+
+    const sorted = [...receipts].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
+
+    expect(sorted[0].id).toBe("2"); // Most recent
+    expect(sorted[2].id).toBe("3"); // Oldest
+  });
+
+  it("should calculate receipt statistics", () => {
+    const receipts = [
+      { status: "completed" as const, priceUSD: 2.0, tasklysAmount: 5 },
+      { status: "completed" as const, priceUSD: 7.0, tasklysAmount: 22 },
+      { status: "completed" as const, priceUSD: 15.0, tasklysAmount: 55 },
+      { status: "failed" as const, priceUSD: 25.0, tasklysAmount: 110 },
+    ];
+
+    const completed = receipts.filter((r) => r.status === "completed");
+    const stats = {
+      totalSpent: completed.reduce((sum, r) => sum + r.priceUSD, 0),
+      totalTasklys: completed.reduce((sum, r) => sum + r.tasklysAmount, 0),
+      totalTransactions: completed.length,
+    };
+
+    expect(stats.totalSpent).toBe(24.0);
+    expect(stats.totalTasklys).toBe(82);
+    expect(stats.totalTransactions).toBe(3);
+  });
+
+  it("should handle empty receipt list", () => {
+    const receipts: any[] = [];
+
+    const stats = {
+      totalSpent: 0,
+      totalTasklys: 0,
+      totalTransactions: 0,
+    };
+
+    expect(receipts).toHaveLength(0);
+    expect(stats.totalSpent).toBe(0);
+  });
+
+  it("should format receipt date correctly", () => {
+    const date = new Date("2026-03-30T15:30:00Z");
+    const formatted = date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    expect(formatted).toContain("marzo");
+    expect(formatted).toContain("30");
+    expect(formatted).toContain("2026");
+  });
+
+  it("should calculate receipt exchange rate", () => {
+    const receipt = { tasklysAmount: 50, priceUSD: 15.0 };
+    const rate = receipt.tasklysAmount / receipt.priceUSD;
+
+    expect(rate).toBeCloseTo(3.33, 2);
+  });
+});

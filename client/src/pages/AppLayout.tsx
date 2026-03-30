@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Loader2, Zap, Home, Plus, MessageCircle, Activity, User } from "lucide-react";
+import { Loader2, Zap, Home, Plus, MessageCircle, Activity, User, ReceiptText } from "lucide-react";
 import { ReactNode } from "react";
 
 interface AppLayoutProps {
