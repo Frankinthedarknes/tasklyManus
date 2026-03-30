@@ -268,3 +268,15 @@
 - [ ] Tests para validación de montos
 - [ ] Tests para manejo de errores
 - [ ] Tests de integración end-to-end
+
+
+## Navigation Menu for Feed (NEW - COMPLETED)
+
+- [x] Crear componente FeedNavMenu con menú hamburguesa
+- [x] Agregar navegación rápida (Feed, Chat, Actividad, Wallet, Perfil)
+- [x] Integrar filtros en el menú (categoría, precio, distancia, urgencia)
+- [x] Agregar búsqueda en el header
+- [x] Mostrar notificaciones y mensajes sin leer
+- [x] Crear página FeedWithMenu con todo integrado
+- [x] Guardar filtros en localStorage
+- [x] Indicador de filtros activos
