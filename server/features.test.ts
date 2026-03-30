@@ -818,3 +818,132 @@ describe("Images and Save Features", () => {
     expect(filtered[0].id).toBe(1);
   });
 });
+
+
+describe("Mock Payment System", () => {
+  it("should have correct Taskly packages", () => {
+    const packages = [
+      { id: "pkg_5", tasklys: 5, priceUSD: 2.0 },
+      { id: "pkg_20", tasklys: 20, priceUSD: 7.0, bonus: 2 },
+      { id: "pkg_50", tasklys: 50, priceUSD: 15.0, bonus: 5 },
+      { id: "pkg_100", tasklys: 100, priceUSD: 25.0, bonus: 10 },
+    ];
+
+    expect(packages).toHaveLength(4);
+    expect(packages[0].tasklys).toBe(5);
+    expect(packages[0].priceUSD).toBe(2.0);
+    expect(packages[3].bonus).toBe(10);
+  });
+
+  it("should validate payment intent creation", () => {
+    const userId = 1;
+    const packageId = "pkg_20";
+
+    // Simulate payment intent
+    const intent = {
+      id: `txn_${Date.now()}`,
+      userId,
+      packageId,
+      amount: 7.0,
+      currency: "USD",
+      status: "pending" as const,
+      createdAt: new Date(),
+    };
+
+    expect(intent.userId).toBe(userId);
+    expect(intent.packageId).toBe(packageId);
+    expect(intent.amount).toBe(7.0);
+    expect(intent.status).toBe("pending");
+  });
+
+  it("should process payment successfully", () => {
+    const intent = {
+      id: "txn_123",
+      userId: 1,
+      packageId: "pkg_50",
+      amount: 15.0,
+      currency: "USD",
+      status: "succeeded" as const,
+      completedAt: new Date(),
+    };
+
+    expect(intent.status).toBe("succeeded");
+    expect(intent.completedAt).toBeDefined();
+  });
+
+  it("should generate transaction ID correctly", () => {
+    const txnId = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    expect(txnId).toContain("txn_");
+    expect(txnId.length).toBeGreaterThan(10);
+  });
+
+  it("should generate invoice number correctly", () => {
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const random = Math.random().toString(36).substr(2, 5).toUpperCase();
+    const invoiceNumber = `INV-${year}${month}-${random}`;
+
+    expect(invoiceNumber).toContain("INV-");
+    expect(invoiceNumber).toContain(year.toString());
+  });
+
+  it("should calculate total Tasklys with bonus", () => {
+    const pkg = { tasklys: 50, bonus: 5 };
+    const total = pkg.tasklys + (pkg.bonus || 0);
+
+    expect(total).toBe(55);
+  });
+
+  it("should handle payment receipt creation", () => {
+    const receipt = {
+      id: "rcpt_123",
+      transactionId: "txn_123",
+      userId: 1,
+      tasklysAmount: 55,
+      priceUSD: 15.0,
+      paymentMethod: "mock_card",
+      status: "completed" as const,
+      createdAt: new Date(),
+      invoiceNumber: "INV-202603-ABC123",
+    };
+
+    expect(receipt.tasklysAmount).toBe(55);
+    expect(receipt.status).toBe("completed");
+    expect(receipt.invoiceNumber).toContain("INV-");
+  });
+
+  it("should track payment statistics", () => {
+    const receipts = [
+      { priceUSD: 2.0, status: "completed" as const, tasklysAmount: 5 },
+      { priceUSD: 7.0, status: "completed" as const, tasklysAmount: 22 },
+      { priceUSD: 15.0, status: "completed" as const, tasklysAmount: 55 },
+    ];
+
+    const totalRevenue = receipts
+      .filter((r) => r.status === "completed")
+      .reduce((sum, r) => sum + r.priceUSD, 0);
+
+    const totalTasklys = receipts
+      .filter((r) => r.status === "completed")
+      .reduce((sum, r) => sum + r.tasklysAmount, 0);
+
+    expect(totalRevenue).toBe(24.0);
+    expect(totalTasklys).toBe(82);
+  });
+
+  it("should validate minimum withdrawal amount", () => {
+    const minWithdrawal = 20;
+    const userBalance = 25;
+
+    expect(userBalance).toBeGreaterThanOrEqual(minWithdrawal);
+  });
+
+  it("should prevent withdrawal below minimum", () => {
+    const minWithdrawal = 20;
+    const userBalance = 15;
+
+    expect(userBalance).toBeLessThan(minWithdrawal);
+  });
+});

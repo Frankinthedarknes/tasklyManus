@@ -216,3 +216,55 @@
 - [x] Tests para guardar/desguardar servicios
 - [x] Tests para búsqueda por texto
 - [x] Tests para pantalla de Actividad mejorada
+
+
+## Stripe Payment Integration (NEW)
+
+### Backend Setup
+- [ ] Instalar dependencia stripe
+- [ ] Configurar variables de entorno (STRIPE_SECRET_KEY, STRIPE_PUBLISHABLE_KEY)
+- [ ] Crear servicio de Stripe en server/_core/stripe.ts
+- [ ] Implementar funciones de inicialización de pagos
+- [ ] Crear endpoint para crear Payment Intent
+- [ ] Crear endpoint para confirmar pagos
+- [ ] Implementar webhooks para eventos de Stripe
+
+### Database
+- [ ] Agregar tabla stripeCustomers para mapear usuarios
+- [ ] Agregar tabla stripePaymentIntents para rastrear intentos
+- [ ] Agregar tabla stripeTransactions para historial
+- [ ] Agregar índices para búsquedas rápidas
+
+### Frontend - Payment UI
+- [ ] Crear componente BuyTasklysModal
+- [ ] Integrar Stripe Elements para formulario seguro
+- [ ] Mostrar opciones de paquetes (5/$2, 20/$7, 50/$15, 100/$25)
+- [ ] Implementar selector de método de pago
+- [ ] Agregar validación de tarjeta
+- [ ] Mostrar estado de procesamiento
+- [ ] Manejar errores de pago
+- [ ] Mostrar confirmación de compra exitosa
+
+### Integration
+- [ ] Agregar botón "Comprar Tasklys" en Profile
+- [ ] Conectar modal de pago con endpoint backend
+- [ ] Actualizar wallet después de pago exitoso
+- [ ] Mostrar historial de compras
+- [ ] Generar recibos PDF
+- [ ] Enviar confirmación por email
+
+### Security
+- [ ] Validar montos en backend
+- [ ] Verificar identidad del usuario
+- [ ] Implementar rate limiting
+- [ ] Encriptar datos sensibles
+- [ ] Usar HTTPS obligatorio
+- [ ] Validar webhooks de Stripe
+
+### Testing
+- [ ] Tests para creación de Payment Intent
+- [ ] Tests para confirmación de pagos
+- [ ] Tests para webhooks
+- [ ] Tests para validación de montos
+- [ ] Tests para manejo de errores
+- [ ] Tests de integración end-to-end

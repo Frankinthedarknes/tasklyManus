@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Loader2, Edit2, LogOut, Zap, TrendingUp, Award } from "lucide-react";
 import AppLayout from "./AppLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
+import BuyTasklysModal from "@/components/BuyTasklysModal";
 
 export default function Profile() {
   const { user, logout } = useAuth();
   const [editing, setEditing] = useState(false);
+  const [showBuyModal, setShowBuyModal] = useState(false);
 
   const { data: profile, isLoading } = trpc.user.getProfile.useQuery();
   const { data: gamification } = trpc.gamification.getProfile.useQuery();
@@ -23,6 +25,11 @@ export default function Profile() {
         <div className="flex items-center justify-center h-96">
           <Loader2 className="animate-spin w-12 h-12 text-blue-500" />
         </div>
+        <BuyTasklysModal
+          isOpen={showBuyModal}
+          onClose={() => setShowBuyModal(false)}
+          onSuccess={() => setShowBuyModal(false)}
+        />
       </AppLayout>
     );
   }
@@ -171,32 +178,38 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* Withdrawal Button */}
-              <Button
-                onClick={() => {
-                  if (wallet && (wallet.balance ?? 0) >= 20) {
-                    withdrawTasklys.mutate({ amount: wallet.balance ?? 0 });
+              {/* Action Buttons */}
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  onClick={() => setShowBuyModal(true)}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Comprar
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (wallet && (wallet.balance ?? 0) >= 20) {
+                      withdrawTasklys.mutate({ amount: wallet.balance ?? 0 });
+                    }
+                  }}
+                  disabled={
+                    !wallet ||
+                    (wallet.balance ?? 0) < 20 ||
+                    withdrawTasklys.isPending
                   }
-                }}
-                disabled={
-                  !wallet ||
-                  (wallet.balance ?? 0) < 20 ||
-                  withdrawTasklys.isPending
-                }
-                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-slate-700 disabled:text-slate-500"
-              >
-                {withdrawTasklys.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    Retirar ({wallet?.balance || 0} Tasklys)
-                  </>
-                )}
-              </Button>
+                  className="bg-green-600 hover:bg-green-700 disabled:bg-slate-700 disabled:text-slate-500"
+                >
+                  {withdrawTasklys.isPending ? (
+                    <>Procesando...</>
+                  ) : (
+                    <>
+                      <TrendingUp className="w-4 h-4 mr-2" />
+                      Retirar
+                    </>
+                  )}
+                </Button>
+              </div>
               <p className="text-xs text-slate-400 text-center">
                 Mínimo 20 Tasklys para retirar
               </p>
@@ -248,6 +261,11 @@ export default function Profile() {
           Cerrar Sesión
         </Button>
       </div>
+        <BuyTasklysModal
+          isOpen={showBuyModal}
+          onClose={() => setShowBuyModal(false)}
+          onSuccess={() => setShowBuyModal(false)}
+        />
     </AppLayout>
   );
 }

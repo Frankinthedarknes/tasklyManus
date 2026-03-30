@@ -6,6 +6,8 @@ import { z } from "zod";
 import * as db from "./db";
 import { TRPCError } from "@trpc/server";
 import { adminRouter } from "./routers/admin";
+import { paymentRouter } from "./routers/payment";
+import * as mockPayment from "./_core/mockPayment";
 
 export const appRouter = router({
   system: systemRouter,
@@ -583,6 +585,7 @@ export const appRouter = router({
 
   // Admin panel
   admin: adminRouter,
+  payment: paymentRouter,
 });
 
 export type AppRouter = typeof appRouter;
