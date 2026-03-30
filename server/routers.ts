@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { validateFileSize, validateMediaFile } from "./storage";
 import { TRPCError } from "@trpc/server";
 import { adminRouter } from "./routers/admin";
 import { paymentRouter } from "./routers/payment";
@@ -257,6 +258,29 @@ export const appRouter = router({
 
   // User Media
   userMedia: router({
+    getUploadUrl: protectedProcedure
+      .input(
+        z.object({
+          type: z.enum(["photo", "video"]),
+          fileName: z.string(),
+          fileSize: z.number(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Validate file
+        try {
+          const storage = await import("./storage");
+          storage.validateFileSize(input.fileSize, input.type);
+          storage.validateMediaFile(input.fileName, input.type);
+          return { success: true, fileName: input.fileName };
+        } catch (error) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: (error as Error).message,
+          });
+        }
+      }),
+
     add: protectedProcedure
       .input(
         z.object({

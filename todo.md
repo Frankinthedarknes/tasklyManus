@@ -497,3 +497,20 @@
 - [x] Success/error toast notifications
 - [x] Easy deletion with confirmation
 - [x] Professional card-based design
+
+
+## S3 Integration for Profile Media (COMPLETED)
+
+- [x] Create S3 presigned URL endpoints for photo and video uploads
+- [x] Add file validation (type, size) on backend
+- [x] Update ProfileEditor component to use S3 uploads
+- [x] Implement direct browser-to-S3 upload
+- [x] Add progress tracking for uploads
+- [x] Create S3 storage helper functions (uploadProfileMedia, validateMediaFile, validateFileSize)
+- [x] Add error handling for upload failures
+- [x] Test photo and video uploads
+- [x] Verify S3 URLs are persisted correctly
+- [x] Create useS3Upload hook for frontend integration
+- [x] Create ProfileEditorS3 component with upload progress
+- [x] Create 18 comprehensive S3 validation tests
+- [x] All 163 tests passing

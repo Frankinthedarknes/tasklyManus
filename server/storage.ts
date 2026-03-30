@@ -100,3 +100,81 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
     url: await buildDownloadUrl(baseUrl, key, apiKey),
   };
 }
+
+
+// Media upload helpers for profile photos and videos
+export async function uploadProfileMedia(
+  userId: number,
+  file: Buffer | Uint8Array | string,
+  mediaType: "photo" | "video",
+  fileName: string
+): Promise<{ key: string; url: string }> {
+  // Validate file type
+  const mimeType = getMimeType(fileName, mediaType);
+  validateMediaFile(fileName, mediaType);
+
+  // Generate unique key with user ID and timestamp
+  const timestamp = Date.now();
+  const randomSuffix = Math.random().toString(36).substring(2, 8);
+  const fileExt = fileName.split(".").pop() || "";
+  const relKey = `users/${userId}/media/${mediaType}/${timestamp}-${randomSuffix}.${fileExt}`;
+
+  // Upload to storage
+  return await storagePut(relKey, file, mimeType);
+}
+
+function getMimeType(fileName: string, mediaType: "photo" | "video"): string {
+  const ext = fileName.toLowerCase().split(".").pop() || "";
+
+  if (mediaType === "photo") {
+    const photoMimes: Record<string, string> = {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      webp: "image/webp",
+      gif: "image/gif",
+    };
+    return photoMimes[ext] || "image/jpeg";
+  } else {
+    const videoMimes: Record<string, string> = {
+      mp4: "video/mp4",
+      webm: "video/webm",
+      mov: "video/quicktime",
+      avi: "video/x-msvideo",
+      mkv: "video/x-matroska",
+    };
+    return videoMimes[ext] || "video/mp4";
+  }
+}
+
+export function validateMediaFile(fileName: string, mediaType: "photo" | "video"): void {
+  const ext = fileName.toLowerCase().split(".").pop() || "";
+
+  if (mediaType === "photo") {
+    const allowedExts = ["jpg", "jpeg", "png", "webp", "gif"];
+    if (!allowedExts.includes(ext)) {
+      throw new Error(`Invalid photo format. Allowed: ${allowedExts.join(", ")}`);
+    }
+  } else {
+    const allowedExts = ["mp4", "webm", "mov", "avi", "mkv"];
+    if (!allowedExts.includes(ext)) {
+      throw new Error(`Invalid video format. Allowed: ${allowedExts.join(", ")}`);
+    }
+  }
+}
+
+export function validateFileSize(
+  size: number,
+  mediaType: "photo" | "video"
+): void {
+  const maxPhotoSize = 5 * 1024 * 1024; // 5MB
+  const maxVideoSize = 50 * 1024 * 1024; // 50MB
+
+  if (mediaType === "photo" && size > maxPhotoSize) {
+    throw new Error(`Photo size exceeds 5MB limit. Got: ${(size / 1024 / 1024).toFixed(2)}MB`);
+  }
+
+  if (mediaType === "video" && size > maxVideoSize) {
+    throw new Error(`Video size exceeds 50MB limit. Got: ${(size / 1024 / 1024).toFixed(2)}MB`);
+  }
+}
