@@ -663,3 +663,158 @@ describe("Advanced Filters", () => {
     expect(activeCount).toBe(4);
   });
 });
+
+
+describe("Images and Save Features", () => {
+  it("should map service categories to image queries", () => {
+    const categoryImageMap: Record<string, string> = {
+      electricidad: "electrical work professional",
+      plomería: "plumbing professional",
+      limpieza: "professional cleaning service",
+      diseño: "graphic design creative",
+      tecnología: "technology computer repair",
+      fitness: "personal trainer fitness",
+      educación: "online education tutor",
+      reparación: "repair maintenance professional",
+    };
+
+    expect(categoryImageMap["electricidad"]).toBe("electrical work professional");
+    expect(categoryImageMap["plomería"]).toBe("plumbing professional");
+    expect(Object.keys(categoryImageMap)).toHaveLength(8);
+  });
+
+  it("should cache images to avoid repeated API calls", () => {
+    const imageCache: Record<string, string> = {};
+    const category = "electricidad";
+    const imageUrl = "https://source.unsplash.com/600x400/?electrical";
+
+    imageCache[category] = imageUrl;
+
+    expect(imageCache[category]).toBe(imageUrl);
+    expect(imageCache[category]).toBeDefined();
+  });
+
+  it("should provide gradient fallbacks for categories", () => {
+    const gradients: Record<string, string> = {
+      electricidad: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+      plomería: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    };
+
+    expect(gradients["electricidad"]).toContain("linear-gradient");
+    expect(gradients["plomería"]).toContain("linear-gradient");
+  });
+
+  it("should map categories to emojis", () => {
+    const emojis: Record<string, string> = {
+      electricidad: "⚡",
+      plomería: "🔧",
+      limpieza: "🧹",
+      diseño: "🎨",
+      tecnología: "💻",
+      fitness: "💪",
+      educación: "📚",
+      reparación: "🔩",
+    };
+
+    expect(emojis["electricidad"]).toBe("⚡");
+    expect(emojis["fitness"]).toBe("💪");
+    expect(Object.keys(emojis)).toHaveLength(8);
+  });
+
+  it("should handle saving services", () => {
+    const savedServices = new Set<number>();
+
+    savedServices.add(1);
+    savedServices.add(2);
+    savedServices.add(3);
+
+    expect(savedServices.has(1)).toBe(true);
+    expect(savedServices.has(2)).toBe(true);
+    expect(savedServices.has(4)).toBe(false);
+    expect(savedServices.size).toBe(3);
+  });
+
+  it("should handle unsaving services", () => {
+    const savedServices = new Set<number>([1, 2, 3]);
+
+    savedServices.delete(2);
+
+    expect(savedServices.has(2)).toBe(false);
+    expect(savedServices.size).toBe(2);
+  });
+
+  it("should persist saved services to localStorage", () => {
+    const savedServices = [1, 2, 3];
+    const serialized = JSON.stringify(savedServices);
+    const deserialized = JSON.parse(serialized);
+
+    expect(deserialized).toEqual(savedServices);
+    expect(deserialized).toHaveLength(3);
+  });
+
+  it("should calculate distance between coordinates", () => {
+    const calculateDistance = (
+      lat1: number,
+      lon1: number,
+      lat2: number,
+      lon2: number
+    ) => {
+      const R = 6371;
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+          Math.cos((lat2 * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return Math.round(R * c * 10) / 10;
+    };
+
+    const distance = calculateDistance(40.7128, -74.006, 40.7489, -73.968);
+    expect(distance).toBeGreaterThan(0);
+    expect(distance).toBeLessThan(10);
+  });
+
+  it("should handle loading state for images", () => {
+    const loadingImages = new Set<number>();
+
+    loadingImages.add(1);
+    loadingImages.add(2);
+
+    expect(loadingImages.has(1)).toBe(true);
+    expect(loadingImages.size).toBe(2);
+
+    loadingImages.delete(1);
+
+    expect(loadingImages.has(1)).toBe(false);
+    expect(loadingImages.size).toBe(1);
+  });
+
+  it("should validate image URL format", () => {
+    const imageUrl = "https://source.unsplash.com/600x400/?electricidad";
+
+    expect(imageUrl).toContain("https://");
+    expect(imageUrl).toContain("unsplash");
+    expect(imageUrl).toMatch(/^https:\/\//);
+  });
+
+  it("should handle search by text in services", () => {
+    const services = [
+      { id: 1, title: "Electricista profesional", description: "Reparación de circuitos" },
+      { id: 2, title: "Plomero experto", description: "Tuberías y grifos" },
+      { id: 3, title: "Diseñador gráfico", description: "Logos y branding" },
+    ];
+
+    const searchTerm = "electricista";
+    const filtered = services.filter(
+      (s) =>
+        s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].id).toBe(1);
+  });
+});

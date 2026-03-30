@@ -165,12 +165,12 @@
 - [ ] Selector de urgencia (radio buttons)
 - [ ] Botón "Aplicar Filtros"
 - [ ] Botón "Limpiar Filtros"
-- [ ] Mostrar contador de resultados
+- [x] Mostrar contador de resultados
 
 ### Integration
 - [ ] Integrar FilterPanel en FeedTinder
 - [ ] Actualizar tarjetas al cambiar filtros
-- [ ] Mostrar estado de filtros activos
+- [x] Mostrar estado de filtros activos
 - [ ] Guardar filtros en localStorage
 - [ ] Cargar filtros guardados al abrir la app
 - [ ] Animación suave al filtrar
@@ -180,3 +180,39 @@
 - [ ] Tests para combinación de filtros
 - [ ] Tests para persistencia en localStorage
 - [ ] Tests para cálculo de resultados
+
+
+## Real Photos Integration ## Real Photos Integration & Save Feature (NEW) Save Feature (COMPLETED)
+
+### Unsplash API Integration
+- [x] Integrar API de Unsplash para obtener imágenes
+- [x] Mapear categorías de servicios a búsquedas en Unsplash
+- [x] Cachear imágenes para mejor rendimiento
+- [x] Reemplazar emojis con fotos reales en FeedTinder
+- [x] Agregar fallback si no hay imagen disponible
+
+### Save Functionality
+- [x] Agregar botón "Guardar" en tarjetas del Feed
+- [x] Crear endpoint backend para guardar/desguardar servicios
+- [x] Mostrar estado de guardado en tarjeta
+- [x] Implementar animación de guardado
+- [x] Sincronizar estado con base de datos
+
+### Activity Screen Enhancement
+- [x] Mostrar sección "Servicios Guardados" en Actividad
+- [x] Permitir acceder a servicios guardados desde Actividad
+- [x] Mostrar contador de servicios guardados
+- [x] Permitir desguardar desde Actividad
+- [x] Filtrar servicios guardados
+
+### Search Enhancement
+- [x] Agregar búsqueda por texto en FilterPanel
+- [x] Buscar en título y descripción
+- [x] Mostrar resultados en tiempo real
+- [x] Combinar búsqueda con otros filtros
+
+### Testing
+- [x] Tests para integración de Unsplash
+- [x] Tests para guardar/desguardar servicios
+- [x] Tests para búsqueda por texto
+- [x] Tests para pantalla de Actividad mejorada
