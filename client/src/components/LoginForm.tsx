@@ -16,6 +16,7 @@ export function LoginForm({ onSuccess, onCancel, onSignUpClick }: LoginFormProps
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loginMutation = trpc.auth.login.useMutation();
 
@@ -33,6 +34,7 @@ export function LoginForm({ onSuccess, onCancel, onSignUpClick }: LoginFormProps
     }
 
     setIsLoading(true);
+    setError(null);
     try {
       await loginMutation.mutateAsync({
         email,
@@ -41,7 +43,9 @@ export function LoginForm({ onSuccess, onCancel, onSignUpClick }: LoginFormProps
       toast.success("¡Sesión iniciada exitosamente!");
       onSuccess?.();
     } catch (error) {
-      toast.error((error as Error).message || "Error al iniciar sesión");
+      const errorMsg = (error as Error).message || "Error al iniciar sesión";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsLoading(false);
     }

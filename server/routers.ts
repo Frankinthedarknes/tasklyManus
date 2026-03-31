@@ -55,12 +55,29 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        // TODO: Implement actual user creation
-        // 1. Check if email already exists
-        // 2. Hash password
-        // 3. Store in DB with both provider and requester roles enabled
-        // 4. Create session
-        return { success: true, message: "Cuenta creada exitosamente" };
+        // Check if email already exists
+        const existingUser = await db.getUserByEmail(input.email);
+        if (existingUser) {
+          throw new Error("El email ya está registrado");
+        }
+        
+        // TODO: Hash password with bcrypt in production
+        const passwordHash = input.password;
+        
+        // Create user
+        const newUser = await db.createUserWithEmail({
+          email: input.email,
+          passwordHash,
+          name: input.name,
+          phone: input.phone,
+          photoUrl: input.photoUrl,
+        });
+        
+        if (!newUser) {
+          throw new Error("Error al crear la cuenta");
+        }
+        
+        return { success: true, message: "Cuenta creada exitosamente", userId: newUser.id };
       }),
     login: publicProcedure
       .input(
@@ -70,12 +87,18 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
-        // TODO: Implement actual login
-        // 1. Find user by email
-        // 2. Verify password hash
-        // 3. Create session
-        // 4. Set session cookie
-        return { success: true, message: "Sesión iniciada exitosamente" };
+        // Find user by email
+        const user = await db.getUserByEmail(input.email);
+        if (!user) {
+          throw new Error("Email o contraseña incorrectos");
+        }
+        
+        // TODO: Use bcrypt.compare() in production
+        if (user.passwordHash !== input.password) {
+          throw new Error("Email o contraseña incorrectos");
+        }
+        
+        return { success: true, message: "Sesión iniciada exitosamente", userId: user.id };
       }),
   }),
 

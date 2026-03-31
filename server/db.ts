@@ -1830,3 +1830,66 @@ export async function updateMediaDisplayOrder(
 
   return true;
 }
+
+
+/**
+ * Get user by email address
+ */
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return null;
+
+  try {
+    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return user[0] || null;
+  } catch (error) {
+    console.error("[Database] Error getting user by email:", error);
+    return null;
+  }
+}
+
+/**
+ * Create user with email and password (for non-OAuth registration)
+ */
+export async function createUserWithEmail(data: {
+  email: string;
+  passwordHash: string;
+  name: string;
+  phone?: string;
+  photoUrl?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database connection failed");
+
+  try {
+    const result = await db.insert(users).values({
+      email: data.email,
+      passwordHash: data.passwordHash,
+      name: data.name,
+      phone: data.phone,
+      photoUrl: data.photoUrl,
+      openId: `email_${data.email}`, // Generate openId for email-based users
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // Get the created user
+    const newUser = await db.select().from(users).where(eq(users.email, data.email)).limit(1);
+    return newUser[0] || null;
+  } catch (error) {
+    console.error("[Database] Error creating user with email:", error);
+    throw error;
+  }
+}
+
+/**
+ * Verify user password (compare hash)
+ * Note: In production, use bcrypt.compare() instead of string comparison
+ */
+export async function verifyUserPassword(email: string, passwordHash: string) {
+  const user = await getUserByEmail(email);
+  if (!user) return false;
+
+  // TODO: Use bcrypt.compare(password, user.passwordHash) in production
+  return user.passwordHash === passwordHash || false;
+}

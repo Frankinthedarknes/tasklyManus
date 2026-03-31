@@ -10,6 +10,7 @@ import {
   json,
   float,
   unique,
+  index,
 } from "drizzle-orm/mysql-core";
 
 /**
@@ -19,8 +20,9 @@ export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
-  email: varchar("email", { length: 320 }),
+  email: varchar("email", { length: 320 }).unique(),
   phone: varchar("phone", { length: 20 }),
+  passwordHash: text("passwordHash"), // For email/password registration
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   
@@ -62,10 +64,21 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
-});
+}, (table) => ({
+  emailIdx: index("email_idx").on(table.email),
+}));
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+// Type for email/password registration
+export type EmailRegistrationInput = {
+  email: string;
+  passwordHash: string;
+  name: string;
+  phone?: string;
+  photoUrl?: string;
+};
 
 /**
  * Wallet: tracks Taskly token balance for each user

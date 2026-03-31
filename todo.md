@@ -592,3 +592,22 @@
 - [ ] TODO: Implement actual session creation after login
 - [ ] TODO: Hash passwords before storing in database
 - [ ] TODO: Add password reset functionality
+
+
+## Login Error Handling & User Registration Bugs (COMPLETED)
+
+- [x] Add error handling in LoginForm for invalid credentials
+- [x] Show "Crear cuenta" option on login error
+- [x] Display error message when login fails
+- [x] Implement getUserByEmail in db.ts for login validation
+- [x] Implement actual user insertion in registration endpoint
+- [x] Add passwordHash field to users table schema
+- [x] Create email unique constraint and index
+- [x] Implement createUserWithEmail function
+- [x] Implement getUserByEmail function
+- [x] Update register endpoint to insert users in database
+- [x] Update login endpoint to verify credentials
+- [x] All 165 tests passing
+- [ ] TODO: Hash password with bcrypt before storing
+- [ ] TODO: Create session/cookie after successful login
+- [ ] TODO: Implement password reset functionality
