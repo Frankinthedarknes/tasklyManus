@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,7 @@ import ProfileEditorS3 from "@/components/ProfileEditorS3";
 
 export default function Profile() {
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const [editing, setEditing] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
 
@@ -260,7 +262,10 @@ export default function Profile() {
 
         {/* Logout Button */}
         <Button
-          onClick={() => logout()}
+          onClick={async () => {
+            await logout();
+            setLocation("/");
+          }}
           variant="outline"
           className="w-full border-red-600 text-red-400 hover:bg-red-600/10"
         >

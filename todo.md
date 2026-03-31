@@ -638,3 +638,14 @@
 - [x] All 165 tests passing
 - [ ] TODO: Test session persistence across page refreshes (manual testing)
 - [ ] TODO: Test session expiration after 30 days (manual testing)
+
+
+## Logout Button & Redirect (COMPLETED)
+
+- [x] Verify logout button exists in Profile component
+- [x] Implement redirect to home after logout
+- [x] Add useLocation hook to Profile.tsx
+- [x] Update logout button to call setLocation("/") after logout
+- [x] Session cookie cleared by logout mutation
+- [x] localStorage user data cleared by logout mutation
+- [x] All 165 tests passing
