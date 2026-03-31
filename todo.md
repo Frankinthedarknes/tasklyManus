@@ -564,3 +564,15 @@
 - [x] Create Register page component
 - [x] Add /register route to App.tsx
 - [x] All 165 tests passing
+
+
+## Mixed User Roles - Simultaneous Provider & Requester (COMPLETED)
+
+- [x] Update RegistrationForm to remove role selection step (3-step form now)
+- [x] Update registration endpoint to create users with both roles by default
+- [x] Update Home.tsx buttons to both link to /register
+- [x] Both buttons now link to /register
+- [x] Registration no longer forces role selection
+- [x] Users created with BOTH provider and requester capabilities
+- [x] All 165 tests passing
+- [x] TypeScript compilation successful

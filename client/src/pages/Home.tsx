@@ -61,14 +61,14 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
-                  onClick={() => window.location.href = getLoginUrl()}
+                  onClick={() => window.location.href = "/register"}
                   size="lg"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-8"
                 >
                   Necesito Ayuda
                 </Button>
                 <Button
-                  onClick={() => window.location.href = getLoginUrl()}
+                  onClick={() => window.location.href = "/register"}
                   size="lg"
                   variant="outline"
                   className="border-slate-600 text-white hover:bg-slate-800"

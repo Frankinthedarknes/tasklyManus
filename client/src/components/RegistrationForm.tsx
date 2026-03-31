@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Upload, Mail, Lock, User, Phone, ArrowRight, ArrowLeft } from "lucide-react";
 
-type RegistrationStep = "form" | "verification" | "photo" | "role";
+type RegistrationStep = "form" | "verification" | "photo";
 
 interface RegistrationData {
   email: string;
@@ -14,7 +14,6 @@ interface RegistrationData {
   name: string;
   phone: string;
   photoUrl?: string;
-  role?: "provider" | "requester";
 }
 
 interface RegistrationFormProps {
@@ -123,20 +122,15 @@ export function RegistrationForm({ onSuccess, onCancel }: RegistrationFormProps)
           ...prev,
           photoUrl: e.target?.result as string,
         }));
-        setStep("role");
+        handleRegister();
       };
       reader.readAsDataURL(photoFile);
     } else {
-      setStep("role");
+      handleRegister();
     }
   };
 
   const handleRegister = async () => {
-    if (!data.role) {
-      toast.error("Por favor selecciona un rol");
-      return;
-    }
-
     setIsLoading(true);
     try {
       await registerUser.mutateAsync({
@@ -145,7 +139,6 @@ export function RegistrationForm({ onSuccess, onCancel }: RegistrationFormProps)
         name: data.name,
         phone: data.phone,
         photoUrl: data.photoUrl,
-        role: data.role,
       });
       toast.success("¡Cuenta creada exitosamente!");
       onSuccess?.();
@@ -341,67 +334,13 @@ export function RegistrationForm({ onSuccess, onCancel }: RegistrationFormProps)
               onClick={handlePhotoUpload}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
-              Siguiente
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {step === "role" && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-white mb-6">Selecciona tu Rol</h2>
-          <p className="text-slate-300 mb-6">
-            ¿Qué deseas hacer en Taskly?
-          </p>
-
-          <button
-            onClick={() => setData((prev) => ({ ...prev, role: "requester" }))}
-            className={`w-full p-4 rounded-lg border-2 transition ${
-              data.role === "requester"
-                ? "border-blue-500 bg-blue-500/10"
-                : "border-slate-600 bg-slate-700/50 hover:border-slate-500"
-            }`}
-          >
-            <div className="font-semibold text-white">Solicitar Servicios</div>
-            <div className="text-sm text-slate-400">
-              Busca prestadores para tus tareas
-            </div>
-          </button>
-
-          <button
-            onClick={() => setData((prev) => ({ ...prev, role: "provider" }))}
-            className={`w-full p-4 rounded-lg border-2 transition ${
-              data.role === "provider"
-                ? "border-blue-500 bg-blue-500/10"
-                : "border-slate-600 bg-slate-700/50 hover:border-slate-500"
-            }`}
-          >
-            <div className="font-semibold text-white">Ofrecer Servicios</div>
-            <div className="text-sm text-slate-400">
-              Gana dinero realizando tareas
-            </div>
-          </button>
-
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => setStep("photo")}
-              className="flex-1"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Atrás
-            </Button>
-            <Button
-              onClick={handleRegister}
-              disabled={isLoading || !data.role}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
-            >
               {isLoading ? "Creando..." : "Crear Cuenta"}
             </Button>
           </div>
         </div>
       )}
+
+
     </Card>
   );
 }

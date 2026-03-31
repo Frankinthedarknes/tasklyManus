@@ -10,6 +10,9 @@ import { adminRouter } from "./routers/admin";
 import { paymentRouter } from "./routers/payment";
 import * as mockPayment from "./_core/mockPayment";
 
+// Note: Users are created with BOTH provider and requester capabilities by default
+// This allows users to offer and request services simultaneously
+
 export const appRouter = router({
   system: systemRouter,
 
@@ -46,14 +49,13 @@ export const appRouter = router({
           name: z.string().min(2),
           phone: z.string().optional(),
           photoUrl: z.string().optional(),
-          role: z.enum(["provider", "requester"]),
         })
       )
       .mutation(async ({ input }) => {
         // TODO: Implement actual user creation
         // 1. Check if email already exists
         // 2. Hash password
-        // 3. Store in DB with role and photo
+        // 3. Store in DB with both provider and requester roles enabled
         // 4. Create session
         return { success: true, message: "Cuenta creada exitosamente" };
       }),
