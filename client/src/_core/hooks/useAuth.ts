@@ -13,6 +13,13 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
   const utils = trpc.useUtils();
 
+  // Verify session on mount to restore user from persistent session
+  const verifySessionQuery = trpc.auth.verifySession.useQuery(undefined, {
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,

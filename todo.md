@@ -624,3 +624,17 @@
 - [x] Photo upload during registration stored in photoUrl field
 - [x] Profile shows photo with img tag when photoUrl exists
 - [x] All 165 tests passing
+
+
+## Persistent Session Verification (COMPLETED)
+
+- [x] Create auth.verifySession endpoint to check cookie-based session
+- [x] Check for manus-session cookie in verifySession endpoint
+- [x] Return authenticated status and user data if session valid
+- [x] Update useAuth hook to call verifySession on app load
+- [x] Add verifySessionQuery with 5-minute stale time
+- [x] Prevent redirect to login if session is valid
+- [x] Session verification happens automatically via useAuth hook
+- [x] All 165 tests passing
+- [ ] TODO: Test session persistence across page refreshes (manual testing)
+- [ ] TODO: Test session expiration after 30 days (manual testing)

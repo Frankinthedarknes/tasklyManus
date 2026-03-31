@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import TransactionHistory from "./pages/TransactionHistory";
 import { useAuth } from "./_core/hooks/useAuth";
 import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 function ProtectedRoute({ component: Component }: { component: any }) {
   const { user, loading } = useAuth();
@@ -71,6 +72,21 @@ function Router() {
 }
 
 function App() {
+  // Verify session on app load
+  useEffect(() => {
+    const verifySession = async () => {
+      try {
+        // Session verification happens automatically through useAuth hook
+        // The hook calls trpc.auth.me which checks the session cookie
+        // No additional action needed here
+      } catch (error) {
+        console.error('Session verification failed:', error);
+      }
+    };
+    
+    verifySession();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">

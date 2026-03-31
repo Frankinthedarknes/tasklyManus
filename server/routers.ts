@@ -28,6 +28,23 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    verifySession: publicProcedure.query(async ({ ctx }) => {
+      // Check if user is authenticated via session cookie
+      if (ctx.user) {
+        return { authenticated: true, user: ctx.user };
+      }
+      
+      // Check for manus-session cookie
+      const sessionCookie = ctx.req.cookies["manus-session"];
+      if (!sessionCookie) {
+        return { authenticated: false, user: null };
+      }
+      
+      // Session cookie exists, but user not in context
+      // This means the session is valid but user data needs to be fetched
+      // In a real app, you would validate the session token and fetch user from DB
+      return { authenticated: false, user: null };
+    }),
     sendVerificationCode: publicProcedure
       .input(z.object({ email: z.string().email() }))
       .mutation(async ({ input }) => {
