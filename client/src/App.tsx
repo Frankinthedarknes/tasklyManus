@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import { Register } from "./pages/Register";
 import { Login } from "./pages/Login";
+import ForgotPassword from "./pages/ForgotPassword";
 import FeedTinderFinal from "./pages/FeedTinderFinal";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
@@ -43,6 +44,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/register"} component={Register} />
       <Route path={"/login"} component={Login} />
+      <Route path={"/forgot-password"} component={ForgotPassword} />
       <Route path={"/app/feed"}>
         {() => <ProtectedRoute component={FeedTinderFinal} />}
       </Route>

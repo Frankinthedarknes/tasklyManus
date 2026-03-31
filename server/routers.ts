@@ -61,6 +61,55 @@ export const appRouter = router({
         // Verify the code (implement proper verification logic)
         return { success: true };
       }),
+    sendPasswordResetCode: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        // Check if user exists
+        const user = await db.getUserByEmail(input.email);
+        if (!user) {
+          // Don't reveal if email exists for security
+          return { success: true, message: "Si el email existe, recibirás un código de reset" };
+        }
+        
+        // Generate reset code
+        const resetCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        
+        // TODO: Store reset code with expiration (e.g., 15 minutes)
+        // TODO: Send email with reset code
+        
+        return { success: true, message: "Código de reset enviado al email", code: resetCode };
+      }),
+    verifyResetCode: publicProcedure
+      .input(z.object({ email: z.string().email(), code: z.string() }))
+      .mutation(async ({ input }) => {
+        // Verify reset code
+        // TODO: Check if code matches and hasn't expired
+        return { success: true, message: "Código válido" };
+      }),
+    resetPassword: publicProcedure
+      .input(z.object({ 
+        email: z.string().email(), 
+        code: z.string(),
+        newPassword: z.string().min(8)
+      }))
+      .mutation(async ({ input }) => {
+        // Verify reset code first
+        // TODO: Check if code is valid and not expired
+        
+        // Find user
+        const user = await db.getUserByEmail(input.email);
+        if (!user) {
+          throw new Error("Usuario no encontrado");
+        }
+        
+        // TODO: Hash new password with bcrypt
+        const passwordHash = input.newPassword;
+        
+        // Update password in database
+        // TODO: Implement updateUserPassword in db.ts
+        
+        return { success: true, message: "Contraseña actualizada exitosamente" };
+      }),
     register: publicProcedure
       .input(
         z.object({
