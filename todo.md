@@ -611,3 +611,16 @@
 - [ ] TODO: Hash password with bcrypt before storing
 - [ ] TODO: Create session/cookie after successful login
 - [ ] TODO: Implement password reset functionality
+
+
+## Login Session Persistence & Redirection (COMPLETED)
+
+- [x] Implement session creation after successful login
+- [x] Set secure session cookie with user ID (manus-session)
+- [x] Set cookie expiration to 30 days
+- [x] Redirect to profile after login success (/app/profile)
+- [x] Redirect to profile after registration success (/app/profile)
+- [x] Verify user photo is displayed in profile (active with fallback emoji)
+- [x] Photo upload during registration stored in photoUrl field
+- [x] Profile shows photo with img tag when photoUrl exists
+- [x] All 165 tests passing

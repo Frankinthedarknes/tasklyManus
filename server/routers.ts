@@ -98,6 +98,14 @@ export const appRouter = router({
           throw new Error("Email o contraseña incorrectos");
         }
         
+        // Create session cookie
+        const sessionId = `session_${user.id}_${Date.now()}`;
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie("manus-session", sessionId, {
+          ...cookieOptions,
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        });
+        
         return { success: true, message: "Sesión iniciada exitosamente", userId: user.id };
       }),
   }),
