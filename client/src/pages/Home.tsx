@@ -37,7 +37,7 @@ export default function Home() {
             <span className="text-xl font-bold text-white">Taskly</span>
           </div>
           <Button
-            onClick={() => window.location.href = getLoginUrl()}
+            onClick={() => window.location.href = "/login"}
             className="bg-blue-600 hover:bg-blue-700"
           >
             Ingresar

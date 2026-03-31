@@ -4,7 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { Upload, Mail, Lock, User, Phone, ArrowRight, ArrowLeft } from "lucide-react";
+import { Upload, Mail, Lock, User, Phone, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { validatePasswordStrength, getPasswordStrengthLabel, getPasswordStrengthColor } from "@shared/passwordValidation";
 
 type RegistrationStep = "form" | "verification" | "photo";
 
@@ -33,10 +34,22 @@ export function RegistrationForm({ onSuccess, onCancel }: RegistrationFormProps)
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordValidation, setPasswordValidation] = useState({
+    score: 0,
+    isValid: false,
+    errors: [] as string[],
+    suggestions: [] as string[],
+  });
 
   const sendVerificationCode = trpc.auth.sendVerificationCode.useMutation();
   const verifyCode = trpc.auth.verifyCode.useMutation();
   const registerUser = trpc.auth.register.useMutation();
+
+  const handlePasswordChange = (newPassword: string) => {
+    setData((prev) => ({ ...prev, password: newPassword }));
+    const validation = validatePasswordStrength(newPassword);
+    setPasswordValidation(validation);
+  };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -209,11 +222,48 @@ export function RegistrationForm({ onSuccess, onCancel }: RegistrationFormProps)
               type="password"
               name="password"
               value={data.password}
-              onChange={handleFormChange}
+              onChange={(e) => handlePasswordChange(e.target.value)}
               placeholder="Mínimo 8 caracteres"
               className="bg-slate-700 border-slate-600 text-white"
             />
-            <p className="text-xs text-slate-400 mt-1">Mínimo 8 caracteres</p>
+            
+            {/* Password Strength Indicator */}
+            {data.password && (
+              <div className="space-y-2 mt-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-medium text-slate-300">Fortaleza</label>
+                    <span className="text-xs font-semibold text-slate-400">
+                      {getPasswordStrengthLabel(passwordValidation.score)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${getPasswordStrengthColor(passwordValidation.score)}`}
+                      style={{ width: `${(passwordValidation.score / 5) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                
+                {passwordValidation.errors.length > 0 && (
+                  <div className="space-y-1">
+                    {passwordValidation.errors.map((error, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-red-400">
+                        <AlertCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                        <span>{error}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {passwordValidation.isValid && (
+                  <div className="flex items-center gap-2 text-xs text-green-400">
+                    <CheckCircle2 className="w-3 h-3" />
+                    <span>Contraseña válida</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">

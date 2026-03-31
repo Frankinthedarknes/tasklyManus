@@ -13,6 +13,9 @@ import * as mockPayment from "./_core/mockPayment";
 // Note: Users are created with BOTH provider and requester capabilities by default
 // This allows users to offer and request services simultaneously
 
+// Password validation is enforced on frontend and backend
+// Minimum requirements: 8 chars, uppercase, lowercase, number, special char
+
 export const appRouter = router({
   system: systemRouter,
 
@@ -58,6 +61,21 @@ export const appRouter = router({
         // 3. Store in DB with both provider and requester roles enabled
         // 4. Create session
         return { success: true, message: "Cuenta creada exitosamente" };
+      }),
+    login: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string().min(8),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        // TODO: Implement actual login
+        // 1. Find user by email
+        // 2. Verify password hash
+        // 3. Create session
+        // 4. Set session cookie
+        return { success: true, message: "Sesión iniciada exitosamente" };
       }),
   }),
 
