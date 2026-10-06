@@ -72,7 +72,7 @@ export function createApplication(db: Database, config: Config, options: { clien
     const response = await auth.handler(new Request(incoming.url, { method: "POST", headers, body: JSON.stringify(parsed.data) }));
     const safeHeaders = new Headers({ "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
     for (const cookie of response.headers.getSetCookie()) safeHeaders.append("set-cookie", cookie);
-    const retry = response.headers.get("retry-after");
+    const retry = response.headers.get("retry-after") ?? response.headers.get("x-retry-after");
     if (retry) safeHeaders.set("retry-after", retry);
     await response.body?.cancel();
     // Better Auth devuelve un token en ciertos cuerpos. El navegador solo

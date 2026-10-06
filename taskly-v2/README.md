@@ -45,6 +45,8 @@ Si el puerto está ocupado, cierra la otra instancia de Taskly y vuelve a intent
 
 Versiones exactas en `package.json` y `package-lock.json`: Node 24, React 19, TypeScript 7, Vite 8, Express 5, Better Auth 1.7, Drizzle 0.45 y PostgreSQL. En desarrollo se usa **PGlite**, PostgreSQL embebido en el servidor con archivos en `data/dev`. No es almacenamiento en el navegador. PGlite solo está permitido en desarrollo y tests.
 
+Se fija `shell-quote` 1.12.0 mediante `overrides` porque la dependencia de desarrollo `concurrently` fija una versión afectada por [GHSA-pqg4-j6r4-53mv](https://github.com/advisories/GHSA-pqg4-j6r4-53mv). La corrección se verifica con `npm audit` y el arranque real de desarrollo.
+
 ## Comprobaciones
 
 ```sh
